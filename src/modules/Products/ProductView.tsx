@@ -47,7 +47,7 @@ const productFormSchema = z.object({
   ).min(1, "At least one product image is required"),
 });
 
-type ProductFormValues = z.infer<typeof productFormSchema>;
+type ProductFormValues = z.input<typeof productFormSchema>;
 
 export default function ProductView() {
   const { id } = useParams();
@@ -73,7 +73,6 @@ export default function ProductView() {
     setValue,
     watch,
     reset,
-    formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -120,10 +119,10 @@ export default function ProductView() {
         collectionId: rawProduct.collectionId ?? 1,
         images: Array.isArray(rawProduct.images) && rawProduct.images.length > 0
           ? rawProduct.images.map((img: any) => ({
-              fileId: img.fileId,
-              alt: img.alt ?? "",
-              isPrimary: img.isPrimary ?? false,
-            }))
+            fileId: img.fileId,
+            alt: img.alt ?? "",
+            isPrimary: img.isPrimary ?? false,
+          }))
           : [{ fileId: 1, alt: "Primary product image", isPrimary: true }],
       });
     }

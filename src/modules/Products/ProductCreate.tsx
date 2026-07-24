@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { toast } from "sonner";
@@ -16,20 +16,20 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormCheckbox, FormInput, FormSelect, FormTextarea } from "@/components/ui/form-controls";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { ProductImageUpload } from "@/modules/Products/ProductImageUpload";
 import { useCategoryQuery } from "@/shared/api/query";
 
-// Validation schema
 const productFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   slug: z.string().min(1, "Slug is required"),
   price: z.coerce.number().min(0, "Price must be non-negative").nonnegative(),
   discountPercentage: z.coerce.number().min(0).max(100).default(0),
   description: z.string().min(1, "Description is required"),
-  materialsInput: z.string().default(""),
+  materials: z.array(z.string()).default([]),
   craftType: z.string().min(1, "Craft type is required"),
   origin: z.string().min(1, "Origin is required"),
-  occasionsInput: z.string().default(""),
+  occasions: z.array(z.string()).default([]),
   height: z.coerce.number().min(0).default(0.1),
   width: z.coerce.number().min(0).default(0.1),
   depth: z.coerce.number().min(0).default(0.1),
@@ -38,13 +38,6 @@ const productFormSchema = z.object({
   stockQuantity: z.coerce.number().int().min(0, "Stock quantity is required"),
   featured: z.boolean().default(false),
   categoryId: z.coerce.number().int().min(0, "Category ID is required"),
-  // images: z.array(
-  //   z.object({
-  //     fileId: z.coerce.number().int().min(1, "File ID must be a positive integer"),
-  //     alt: z.string().min(1, "Alt text is required"),
-  //     isPrimary: z.boolean().default(false),
-  //   })
-  // ).min(1, "At least one product image is required"),
   images: z.any()
 });
 
@@ -55,13 +48,30 @@ export default function ProductCreate() {
   const [isGeneratingSlug, setIsGeneratingSlug] = useState(false);
   const { data: categoryData } = useCategoryQuery()
   const categoryOptions = categoryData?.data?.map((item) => ({ label: item?.categoryName, value: item?.id })) ?? []
-  // React Hook Form setup
+
+  const { data: materialsData } = useQuery({
+    queryKey: ["materials"],
+    queryFn: async () => {
+      const res = await api.get("/api/v1/admin/material");
+      return res.data?.data ?? res.data;
+    },
+  });
+  const materialOptions = (materialsData ?? []).map((m: any) => ({ value: m.name, label: m.name }));
+
+  const { data: occasionsData } = useQuery({
+    queryKey: ["occasions"],
+    queryFn: async () => {
+      const res = await api.get("/api/v1/admin/occasion");
+      return res.data?.data ?? res.data;
+    },
+  });
+  const occasionOptions = (occasionsData ?? []).map((o: any) => ({ value: o.name, label: o.name }));
+
   const {
     handleSubmit,
     control,
     setValue,
     watch,
-    formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -70,10 +80,10 @@ export default function ProductCreate() {
       price: 0,
       discountPercentage: 0,
       description: "",
-      materialsInput: "",
+      materials: [],
       craftType: "",
       origin: "",
-      occasionsInput: "",
+      occasions: [],
       height: 0,
       width: 0,
       depth: 0,
@@ -86,10 +96,8 @@ export default function ProductCreate() {
     },
   });
 
-  // Watch fields
   const watchTitle = watch("title");
 
-  // Auto-generate slug from title
   const generateSlug = () => {
     if (!watchTitle) return;
     setIsGeneratingSlug(true);
@@ -101,7 +109,6 @@ export default function ProductCreate() {
     setTimeout(() => setIsGeneratingSlug(false), 300);
   };
 
-  // Mutation to create product
   const mutation = useMutation({
     mutationFn: async (payload: any) => {
       const response = await api.post("/api/v1/admin/product", payload);
@@ -119,25 +126,16 @@ export default function ProductCreate() {
   });
 
   const onSubmit = (data: ProductFormValues) => {
-    // Transform materials and occasions from comma-separated input strings to string arrays
-    const materials = data.materialsInput
-      ? data.materialsInput.split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
-    const occasions = data.occasionsInput
-      ? data.occasionsInput.split(",").map((s) => s.trim()).filter(Boolean)
-      : [];
-
-    // Construct the exact API payload format
     const payload = {
       title: data.title,
       slug: data.slug,
       price: data.price,
       discountPercentage: data.discountPercentage,
       description: data.description,
-      materials,
+      materials: data.materials,
       craftType: data.craftType,
       origin: data.origin,
-      occasions,
+      occasions: data.occasions,
       height: data.height,
       width: data.width,
       depth: data.depth,
@@ -158,7 +156,6 @@ export default function ProductCreate() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Breadcrumb Header */}
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -177,10 +174,8 @@ export default function ProductCreate() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* Main Info Column (Left 2 cols) */}
           <div className="lg:col-span-2 space-y-6">
 
-            {/* Primary Details Card */}
             <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-4">
               <div className="flex items-center gap-2 border-b border-border pb-3">
                 <Info className="h-5 w-5 text-primary" />
@@ -249,7 +244,6 @@ export default function ProductCreate() {
               </div>
             </div>
 
-            {/* Specifications Card */}
             <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-4">
               <div className="flex items-center gap-2 border-b border-border pb-3">
                 <Ruler className="h-5 w-5 text-primary" />
@@ -257,41 +251,13 @@ export default function ProductCreate() {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <FormInput
-                  control={control}
-                  name="height"
-                  label="Height (cm)"
-                  type="number"
-                  step="0.01"
-                />
-
-                <FormInput
-                  control={control}
-                  name="width"
-                  label="Width (cm)"
-                  type="number"
-                  step="0.01"
-                />
-
-                <FormInput
-                  control={control}
-                  name="depth"
-                  label="Depth (cm)"
-                  type="number"
-                  step="0.01"
-                />
-
-                <FormInput
-                  control={control}
-                  name="weight"
-                  label="Weight (kg)"
-                  type="number"
-                  step="0.01"
-                />
+                <FormInput control={control} name="height" label="Height (cm)" type="number" step="0.01" />
+                <FormInput control={control} name="width" label="Width (cm)" type="number" step="0.01" />
+                <FormInput control={control} name="depth" label="Depth (cm)" type="number" step="0.01" />
+                <FormInput control={control} name="weight" label="Weight (kg)" type="number" step="0.01" />
               </div>
             </div>
 
-            {/* Images Card */}
             <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-4">
               <div className="flex items-center gap-2 border-b border-border pb-3">
                 <ImageIcon className="h-5 w-5 text-primary" />
@@ -302,10 +268,8 @@ export default function ProductCreate() {
 
           </div>
 
-          {/* Right Sidebar Form Config (1 col) */}
           <div className="space-y-6">
 
-            {/* Meta & Inventory Settings */}
             <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-4">
               <div className="flex items-center gap-2 border-b border-border pb-3">
                 <Layers className="h-5 w-5 text-primary" />
@@ -348,7 +312,6 @@ export default function ProductCreate() {
               </div>
             </div>
 
-            {/* Extra Attributes (Materials, Occasions) */}
             <div className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-4">
               <div className="flex items-center gap-2 border-b border-border pb-3">
                 <Info className="h-5 w-5 text-primary" />
@@ -370,25 +333,32 @@ export default function ProductCreate() {
                   placeholder="e.g. Nepal, Morocco"
                 />
 
-                <FormInput
-                  control={control}
-                  name="materialsInput"
-                  label="Materials"
-                  placeholder="e.g. Oak Wood, Brass, Glass"
-                  description="Comma-separated"
-                />
+                <Controller name="materials" control={control} render={({ field }) => (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Materials</label>
+                    <MultiSelect<string>
+                      options={materialOptions}
+                      selected={field.value ?? []}
+                      onChange={field.onChange}
+                      placeholder="Select materials..."
+                    />
+                  </div>
+                )} />
 
-                <FormInput
-                  control={control}
-                  name="occasionsInput"
-                  label="Occasions"
-                  placeholder="e.g. Wedding, Anniversary"
-                  description="Comma-separated"
-                />
+                <Controller name="occasions" control={control} render={({ field }) => (
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Occasions</label>
+                    <MultiSelect<string>
+                      options={occasionOptions}
+                      selected={field.value ?? []}
+                      onChange={field.onChange}
+                      placeholder="Select occasions..."
+                    />
+                  </div>
+                )} />
               </div>
             </div>
 
-            {/* Action Bar */}
             <div className="space-y-3 pt-2">
               <Button
                 type="submit"

@@ -114,35 +114,6 @@ export default function ProductList() {
   const columns = useMemo<ColumnDef<Product, any>[]>(
     () => [
       {
-        accessorKey: "id",
-        header: "ID",
-        cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">#{row.original.id}</span>,
-      },
-      {
-        id: "image",
-        header: "Image",
-        cell: ({ row }) => {
-          const product = row.original;
-          const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
-          return (
-            <div className="h-10 w-10 rounded-md bg-muted border overflow-hidden flex items-center justify-center text-xs text-muted-foreground">
-              {primaryImage ? (
-                <img
-                  src={`https://backend-4gle.onrender.com/api/v1/file/download/${primaryImage.fileId}`}
-                  alt={primaryImage.alt || product.title}
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = "none";
-                  }}
-                />
-              ) : (
-                "No Img"
-              )}
-            </div>
-          );
-        },
-      },
-      {
         accessorKey: "title",
         header: "Title",
         cell: ({ row }) => (

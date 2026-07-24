@@ -1,8 +1,8 @@
 import type { AxiosError, AxiosResponse, RawAxiosRequestHeaders } from "axios";
 import Axios from "axios";
-import type { Primitive } from "type-fest";
+import type { JsonObject, Primitive } from "type-fest";
 
-import type { ApiDetailType, RequestDataType } from "./api-types";
+import type { ApiDetailType, BackendErrorResponse, BackendSuccessResponse, RequestDataType } from "./api-types";
 import {
   getAxiosParams,
   getBasicAuthCredentials,
@@ -15,8 +15,8 @@ import HttpException from "@/utils/exceptions/http-exception";
 
 export interface IInitApiRequest {
   apiDetails: ApiDetailType;
-  pathVariables?: GenericObj<Primitive>;
-  params?: { [key: string]: Primitive | Array<GenericObj<Primitive>> };
+  pathVariables?: Record<string, Primitive>;
+  params?: { [key: string]: Primitive | Array<Record<string, Primitive>> };
   requestData?: RequestDataType;
   signal?: AbortSignal;
   headers?: RawAxiosRequestHeaders;
@@ -48,7 +48,7 @@ const initApiRequest = async <TData>({
       auth: getBasicAuthCredentials(sanitizedDetails.requestBodyType),
     });
 
-    if (response.data.status === false) {
+    if ((response.data as { status: boolean }).status === false) {
       throw new HttpException({
         message: response.data.message || "An error occurred",
         status: 400,
@@ -63,7 +63,7 @@ const initApiRequest = async <TData>({
     }
 
     const managedError = manageErrorResponse(
-      error as AxiosError<BackendErrorResponse<GenericObj>>,
+      error as AxiosError<BackendErrorResponse<JsonObject>>,
     );
 
     throw new HttpException({

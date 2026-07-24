@@ -1,7 +1,7 @@
-import type { ManagedAxiosError } from "@/lib/api-request/api-types";
+import type { ManagedAxiosError, BackendErrorResponse } from "@/lib/api-request/api-types";
 
 class HttpException<
-  TError = ManagedAxiosError<BackendErrorResponse<GenericObj>>,
+  TError = ManagedAxiosError<BackendErrorResponse<Record<string, unknown>>>,
 > extends Error {
   public status?: number;
   public error: TError;

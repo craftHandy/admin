@@ -1,5 +1,23 @@
 import type { AxiosRequestConfig } from "axios";
 
+export type GenericObj<T = unknown> = Record<string, T>;
+
+export interface BackendResponse<T = unknown> {
+  status: boolean;
+  message?: string;
+  data?: T;
+  error?: unknown;
+}
+
+export interface BackendSuccessResponse<T = unknown> extends BackendResponse<T> {
+  status: true;
+}
+
+export interface BackendErrorResponse<T = unknown> extends BackendResponse<T> {
+  status: false;
+  error?: T;
+}
+
 export type TransformedRequestData =
   | FormData
   | RequestDataType
@@ -9,28 +27,31 @@ export interface RequestDataType {
   [key: string]: unknown;
 }
 
-export enum RequestMethod {
-  GET = "GET",
-  DELETE = "DELETE",
-  HEAD = "HEAD",
-  OPTIONS = "OPTIONS",
-  POST = "POST",
-  PUT = "PUT",
-  PATCH = "PATCH",
-  PURGE = "PURGE",
-  LINK = "LINK",
-  UNLINK = "UNLINK",
-}
+export const RequestMethod = {
+  GET: "GET",
+  DELETE: "DELETE",
+  HEAD: "HEAD",
+  OPTIONS: "OPTIONS",
+  POST: "POST",
+  PUT: "PUT",
+  PATCH: "PATCH",
+  PURGE: "PURGE",
+  LINK: "LINK",
+  UNLINK: "UNLINK",
+} as const;
 
-export enum RequestBodyType {
-  QUERY_STRING = "QUERY_STRING",
-  JSON = "JSON",
-  FORM_DATA = "FORM_DATA",
-  NO_AUTH = "NO_AUTH",
-  FILE = "FILE",
-  BASIC_AUTH = "BASIC_AUTH",
-}
-
+export const RequestBodyType = {
+  QUERY_STRING: "QUERY_STRING",
+  JSON: "JSON",
+  FORM_DATA: "FORM_DATA",
+  NO_AUTH: "NO_AUTH",
+  FILE: "FILE",
+  BASIC_AUTH: "BASIC_AUTH",
+} as const;
+export type RequestMethod =
+  (typeof RequestMethod)[keyof typeof RequestMethod];
+export type RequestBodyType =
+  (typeof RequestBodyType)[keyof typeof RequestBodyType];
 export interface ApiDetailType {
   actionName?: string | Array<string>;
   controllerName: string;
@@ -39,7 +60,7 @@ export interface ApiDetailType {
   baseUrl?: string;
 }
 
-export interface ManagedAxiosError<Data = BackendErrorResponse<unknown>> {
+export interface ManagedAxiosError<Data = BackendResponse<unknown>> {
   message: string;
   data: Data;
   statusCode: number | boolean;

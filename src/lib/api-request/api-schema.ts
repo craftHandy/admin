@@ -8,6 +8,8 @@ import type {
 
 import type {
   ApiDetailType,
+  BackendErrorResponse,
+  GenericObj,
   ManagedAxiosError,
   RequestDataType,
   TransformedRequestData,
@@ -40,8 +42,7 @@ export const basicAuthCredentials: AxiosBasicCredentials = {
 export const getBasicAuthCredentials = (
   requestBodyType: RequestBodyType | undefined,
 ) => {
-  if (!requestBodyType) return;
-  if ([RequestBodyType.BASIC_AUTH].includes(requestBodyType))
+  if (requestBodyType === RequestBodyType.BASIC_AUTH)
     return basicAuthCredentials;
 };
 
@@ -124,7 +125,7 @@ export const getFormData = (requestData: RequestDataType): FormData => {
 };
 
 export function getQueryString(data: GenericObj): URLSearchParams {
-  return new URLSearchParams(data);
+  return new URLSearchParams(data as Record<string, string>);
 }
 
 export const transformRequestData = (

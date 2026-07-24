@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Controller, type Control, type FieldPath, type FieldValues } from "react-hook-form";
-import { Upload, X, Loader2, Plus } from "lucide-react";
+import { Upload, X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

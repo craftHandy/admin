@@ -23,7 +23,7 @@ export const useLogin = () => {
           },
         }
       );
-      const body = response.data as Record<string, unknown>;
+      const body = response.data as any;
       const tokens = (body.data ?? body) as ILoginResponse;
       return tokens;
     },

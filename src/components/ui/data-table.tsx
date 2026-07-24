@@ -99,7 +99,6 @@ export function DataTable<TData>({
     manualFiltering = false,
     getRowId,
     renderSubComponent,
-    enableColumnVisibility = false,
     className,
 }: DataTableProps<TData>) {
     const effectiveBehavior = tableConfig?.behavior ?? {};
@@ -109,7 +108,6 @@ export function DataTable<TData>({
     const effectiveManualPagination = effectiveBehavior.manualPagination ?? manualPagination;
     const effectiveManualSorting = effectiveBehavior.manualSorting ?? manualSorting;
     const effectiveManualFiltering = effectiveBehavior.manualFiltering ?? manualFiltering;
-    const effectiveEnableColumnVisibility = effectiveBehavior.enableColumnVisibility ?? enableColumnVisibility;
     const effectiveSearchKey = effectiveSearch.key ?? searchKey;
     const effectiveSearchPlaceholder = effectiveSearch.placeholder ?? searchPlaceholder;
     const [internalSorting, setInternalSorting] = React.useState<SortingState>([]);

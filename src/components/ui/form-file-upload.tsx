@@ -4,7 +4,7 @@ import { Upload, X, File, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-export type FileContext = "USER_PROFILE" | "CATEGORY" | "PRODUCT";
+export type FileContext = "USER_PROFILE" | "CATEGORY" | "PRODUCT" | "BLOG";
 
 export interface UploadedFile {
   fileId: number;
@@ -19,6 +19,7 @@ type FormFileUploadProps = {
   maxFiles?: number;
   maxSize?: number;
   multiple?: boolean;
+  autoUpload?: boolean;
   className?: string;
   disabled?: boolean;
 };
@@ -30,6 +31,7 @@ export function FormFileUpload({
   maxFiles = 5,
   maxSize = 5 * 1024 * 1024,
   multiple = true,
+  autoUpload = false,
   className,
   disabled,
 }: FormFileUploadProps) {
@@ -47,6 +49,18 @@ export function FormFileUpload({
     [maxFiles]
   );
 
+  const handleUpload = React.useCallback(async () => {
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      const result = await onUpload(files, fileContext);
+      setUploaded((prev) => [...prev, ...result]);
+      setFiles([]);
+    } finally {
+      setUploading(false);
+    }
+  }, [files, onUpload, fileContext]);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept,
@@ -60,17 +74,13 @@ export function FormFileUpload({
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleUpload = async () => {
-    if (files.length === 0) return;
-    setUploading(true);
-    try {
-      const result = await onUpload(files, fileContext);
-      setUploaded((prev) => [...prev, ...result]);
-      setFiles([]);
-    } finally {
-      setUploading(false);
+  // auto upload when a single file is selected and autoUpload is enabled
+  React.useEffect(() => {
+    if (autoUpload && files.length > 0) {
+      // for single-file mode we upload immediately
+      handleUpload();
     }
-  };
+  }, [autoUpload, files, handleUpload]);
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -124,32 +134,34 @@ export function FormFileUpload({
             </div>
           ))}
 
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setFiles([])}
-              disabled={uploading}
-            >
-              Clear
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleUpload}
-              disabled={uploading || files.length === 0}
-            >
-              {uploading ? (
-                <>
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                `Upload ${files.length} file${files.length > 1 ? "s" : ""}`
-              )}
-            </Button>
-          </div>
+          {!autoUpload && (
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setFiles([])}
+                disabled={uploading}
+              >
+                Clear
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleUpload}
+                disabled={uploading || files.length === 0}
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  `Upload ${files.length} file${files.length > 1 ? "s" : ""}`
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

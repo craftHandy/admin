@@ -1,7 +1,9 @@
 import type { AxiosResponse } from "axios";
 
 import type {
+  Mutation,
   MutationMeta,
+  Query,
   QueryMeta,
 } from "@tanstack/react-query";
 
@@ -61,7 +63,7 @@ const onError = (httpException: HttpException, disableFailureToast = false) => {
 
 const onQueryError = (
   responseError: unknown,
-  query: Record<string, unknown>,
+  query: Query<unknown, unknown, unknown, readonly unknown[]>,
 ) => {
   onError(
     responseError as HttpException,
@@ -71,9 +73,9 @@ const onQueryError = (
 
 const onMutationError = async (
   responseError: unknown,
-  variables: unknown,
-  context: unknown,
-  mutation: Record<string, unknown>,
+  _variables: unknown,
+  _context: unknown,
+  mutation: Mutation<unknown, unknown, unknown, unknown>,
 ) => {
   onError(
     responseError as HttpException,
@@ -83,7 +85,7 @@ const onMutationError = async (
   );
 };
 
-const onQuerySuccess = (data: unknown, query: Record<string, unknown>) => {
+const onQuerySuccess = (_data: unknown, query: Query<unknown, unknown, unknown, readonly unknown[]>) => {
   if ((query.meta as QueryMeta | undefined)?.disableSuccessToast) return;
 
   const currentTime = Date.now();
@@ -97,11 +99,11 @@ const onQuerySuccess = (data: unknown, query: Record<string, unknown>) => {
 
 const onMutationSuccess = (
   responseData: unknown,
-  variables: unknown,
-  context: unknown,
-  query: Record<string, unknown>,
+  _variables: unknown,
+  _context: unknown,
+  mutation: Mutation<unknown, unknown, unknown, unknown>,
 ) => {
-  if ((query.meta as MutationMeta | undefined)?.disableSuccessToast) return;
+  if ((mutation.meta as MutationMeta | undefined)?.disableSuccessToast) return;
   const currentTime = Date.now();
   const intervalDuration = 2500;
   if (currentTime - lastMutationSuccessTime < intervalDuration) {
@@ -110,10 +112,9 @@ const onMutationSuccess = (
 
   lastMutationSuccessTime = currentTime;
 
-  const toastData = (
-    responseData as AxiosResponse<{ data?: { message?: string } }>
-  )
-  const messageText = toastData?.data?.message ?? toastData?.message;
+  const toastData =
+    responseData as AxiosResponse<{ data?: { message?: string }; message?: string }>;
+  const messageText = toastData?.data?.data?.message ?? toastData?.data?.message;
   if (messageText) toast.success(messageText);
 };
 

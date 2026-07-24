@@ -94,11 +94,11 @@ function HeadingSelect({ editor }: { editor: Editor }) {
     <select
       value={currentLevel.toString()}
       onChange={(e) => {
-        const level = parseInt(e.target.value);
-        if (level === 0) {
+        const raw = Number(e.target.value) as 0 | 1 | 2 | 3 | 4 | 5 | 6;
+        if (raw === 0) {
           editor.chain().focus().setParagraph().run();
         } else {
-          editor.chain().focus().toggleHeading({ level }).run();
+          editor.chain().focus().toggleHeading({ level: raw as 1 | 2 | 3 | 4 | 5 | 6 }).run();
         }
       }}
       className="h-8 text-xs px-2 rounded border border-border bg-background text-foreground cursor-pointer"
@@ -398,7 +398,6 @@ function AlignMenu({ editor }: { editor: Editor }) {
               "flex items-center gap-2 px-2 py-1.5",
               currentAlign === align.value && "bg-primary/10 text-primary"
             )}
-            inset={false}
           >
             <align.icon className="h-4 w-4" />
             <span className="text-sm">{align.label}</span>
