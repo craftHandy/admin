@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { Controller, type Control, type FieldPath, type FieldValues } from "react-hook-form";
 import { Upload, X, Loader2 } from "lucide-react";
@@ -11,6 +11,7 @@ type ImageItem = {
   fileId: number;
   alt: string;
   isPrimary: boolean;
+  previewUrl?: string;
 };
 
 type ProductImageUploadProps<
@@ -26,6 +27,14 @@ export function ProductImageUpload<
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 >({ control, name }: ProductImageUploadProps<TFieldValues, TName>) {
   const [uploading, setUploading] = useState(false);
+  const createdUrlsRef = useRef<string[]>([]);
+
+  useEffect(
+    () => () => {
+      createdUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    },
+    []
+  );
 
   return (
     <Controller
@@ -41,20 +50,39 @@ export function ProductImageUpload<
         const handleUpload = async (files: File[]) => {
           if (files.length === 0) return;
           setUploading(true);
-          try {
-            const uploaded = await fileApi.uploadMultiple(files, "PRODUCT");
-            const newItems: ImageItem[] = uploaded.map((f, i) => ({
-              fileId: f.fileId,
+          const baseIndex = images.length;
+          const previewItems: ImageItem[] = files.map((file, i) => {
+            const url = URL.createObjectURL(file);
+            createdUrlsRef.current.push(url);
+            return {
+              fileId: 0,
               alt: "",
               isPrimary: images.length === 0 && i === 0,
-            }));
-            setImages([...images, ...newItems]);
+              previewUrl: url,
+            };
+          });
+          setImages([...images, ...previewItems]);
+
+          try {
+            const uploaded = await fileApi.uploadMultiple(files, "PRODUCT");
+            const withFileIds = [...images, ...previewItems].map((img, idx) => {
+              const offset = idx - baseIndex;
+              if (offset >= 0 && offset < uploaded.length && uploaded[offset]?.fileId) {
+                return { ...img, fileId: uploaded[offset].fileId };
+              }
+              return img;
+            });
+            setImages(withFileIds);
+          } catch {
+            setImages([...images, ...previewItems].filter((img) => img.fileId !== 0));
           } finally {
             setUploading(false);
           }
         };
 
         const removeImage = (index: number) => {
+          const removed = images[index];
+          if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
           const next = images.filter((_, i) => i !== index);
           if (images[index]?.isPrimary && next.length > 0) {
             next[0].isPrimary = true;
@@ -94,14 +122,15 @@ export function ProductImageUpload<
                     className="flex flex-col md:flex-row items-start md:items-end gap-3 p-3 rounded-lg border bg-muted/20"
                   >
                     <div className="w-full md:w-24 h-16 rounded-md bg-muted border overflow-hidden flex items-center justify-center shrink-0">
-                      <img
-                        src={`https://backend-4gle.onrender.com/api/v1/file/download/${img.fileId}`}
-                        alt={img.alt || "Product"}
-                        className="h-full w-full object-cover"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = "none";
-                        }}
-                      />
+                      {img.previewUrl ? (
+                        <img
+                          src={img.previewUrl}
+                          alt={img.alt || "Product"}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">#{img.fileId}</span>
+                      )}
                     </div>
 
                     <div className="flex-1 w-full space-y-1">

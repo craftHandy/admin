@@ -1,4 +1,4 @@
-import { LayoutGrid, Package, Tags, Tag, CalendarDays, Layers, FileText } from "lucide-react";
+import { LayoutGrid, Package, Tags, Tag, CalendarDays, Layers, FileText, MonitorPlay } from "lucide-react";
 import { type RouteObject } from "react-router-dom";
 import Dashboard from "@/modules/Dashboard/Dashboard";
 import ProductList from "@/modules/Products/ProductList";
@@ -13,6 +13,9 @@ import MaterialList from "@/modules/Materials/MaterialList";
 import BlogList from "@/modules/Blogs/BlogList";
 import BlogCreate from "@/modules/Blogs/BlogCreate";
 import BlogView from "@/modules/Blogs/BlogView";
+import HeroSlideList from "@/modules/HeroSlides/HeroSlideList";
+import HeroSlideCreate from "@/modules/HeroSlides/HeroSlideCreate";
+import HeroSlideView from "@/modules/HeroSlides/HeroSlideView";
 
 export type AppRoutesProps = RouteObject & {
   icon?: React.ReactNode;
@@ -89,6 +92,23 @@ const MAIN_ITEMS: AppRoutesProps[] = [
   {
     path: "/blogs/:id/edit",
     element: <BlogCreate />,
+  },
+  {
+    icon: <MonitorPlay size={20} />,
+    path: "/hero-slides",
+    element: <HeroSlideList />,
+  },
+  {
+    path: "/hero-slides/create",
+    element: <HeroSlideCreate />,
+  },
+  {
+    path: "/hero-slides/:id",
+    element: <HeroSlideView />,
+  },
+  {
+    path: "/hero-slides/:id/edit",
+    element: <HeroSlideCreate />,
   },
 ];
 

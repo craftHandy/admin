@@ -5,6 +5,7 @@ import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/lib/api";
+import { fileApi } from "@/lib/file-api";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, X, FileText, Settings, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,13 @@ import { FormInput } from "@/components/ui/form-controls";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { useDropzone } from "react-dropzone";
+import { useLocalFilePreview } from "@/hooks/use-local-file-preview";
 
 const blogSchema = z.object({
     title: z.string().min(1, "Title is required"),
     slug: z.string().min(1, "Slug is required"),
     coverImage: z.string().optional(),
+    coverFileId: z.number().optional().nullable(),
     excerpt: z.string().optional(),
     content: z.string().optional(),
     tagIds: z.array(z.number()).optional(),
@@ -31,10 +34,11 @@ export default function BlogCreate() {
     const id = params.id;
     const queryClient = useQueryClient();
     const [isGeneratingSlug, setIsGeneratingSlug] = useState(false);
+    const { previewUrl: localPreview, setPreview, clearPreview } = useLocalFilePreview();
 
     const { control, handleSubmit, reset, watch, setValue } = useForm<BlogFormValues>({
         resolver: zodResolver(blogSchema),
-        defaultValues: { title: "", slug: "", coverImage: "", excerpt: "", content: "", tagIds: [], status: "DRAFT" },
+        defaultValues: { title: "", slug: "", coverImage: "", coverFileId: null, excerpt: "", content: "", tagIds: [], status: "DRAFT" },
     });
 
     const watchTitle = watch("title");
@@ -74,6 +78,7 @@ export default function BlogCreate() {
                 title: existing.title ?? "",
                 slug: existing.slug ?? "",
                 coverImage: existing.coverImage ?? "",
+                coverFileId: existing.coverFileId ?? null,
                 excerpt: existing.excerpt ?? "",
                 content: existing.content ?? "",
                 tagIds: existing.tags?.map((t: any) => t.id) ?? existing.tagIds ?? [],
@@ -84,11 +89,14 @@ export default function BlogCreate() {
 
     const mutation = useMutation({
         mutationFn: async (payload: BlogFormValues) => {
+            const body: Record<string, unknown> = { ...payload };
+            delete body.coverFileId;
+
             if (id) {
-                const res = await api.put(`/api/v1/admin/blog/${id}`, payload);
+                const res = await api.put(`/api/v1/admin/blog/${id}`, body);
                 return res.data;
             }
-            const res = await api.post("/api/v1/admin/blog", payload);
+            const res = await api.post("/api/v1/admin/blog", body);
             return res.data;
         },
         onSuccess: () => {
@@ -110,16 +118,13 @@ export default function BlogCreate() {
         multiple: false,
         onDrop: async (acceptedFiles) => {
             if (acceptedFiles.length === 0) return;
-            const file = acceptedFiles[0];
-            const fd = new FormData();
-            fd.append("file", file);
+            setPreview(acceptedFiles[0]);
             try {
-                const res = await api.post("/api/v1/file/upload?fileContext=BLOG", fd, {
-                    headers: { "Content-Type": "multipart/form-data" },
-                });
-                const uploaded = res.data?.data ?? res.data;
-                const url = uploaded?.fileUrl ?? uploaded?.url ?? uploaded;
-                setValue("coverImage", url, { shouldValidate: true });
+                const uploaded = await fileApi.uploadSingle(acceptedFiles[0], "BLOG");
+                if (uploaded?.fileId) {
+                    setValue("coverFileId", uploaded.fileId, { shouldValidate: true });
+                }
+                setValue("coverImage", uploaded?.fileUrl ?? "", { shouldValidate: true });
             } catch {
                 toast.error("Failed to upload cover image");
             }
@@ -127,7 +132,9 @@ export default function BlogCreate() {
     });
 
     const removeCover = () => {
+        clearPreview();
         setValue("coverImage", "", { shouldValidate: true });
+        setValue("coverFileId", null, { shouldValidate: true });
     };
 
     return (
@@ -221,9 +228,13 @@ export default function BlogCreate() {
                                 <h3 className="font-semibold text-lg text-foreground">Cover Image</h3>
                             </div>
 
-                            {coverImage ? (
+                            {localPreview || coverImage ? (
                                 <div className="relative rounded-lg overflow-hidden border border-border">
-                                    <img src={coverImage} alt="Cover" className="w-full h-40 object-cover" />
+                                    <img
+                                        src={localPreview ?? coverImage}
+                                        alt="Cover"
+                                        className="w-full h-40 object-cover"
+                                    />
                                     <button type="button" onClick={removeCover} className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80">
                                         <X className="h-4 w-4" />
                                     </button>

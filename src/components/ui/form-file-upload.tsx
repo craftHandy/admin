@@ -4,7 +4,7 @@ import { Upload, X, File, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-export type FileContext = "USER_PROFILE" | "CATEGORY" | "PRODUCT" | "BLOG";
+export type FileContext = "USER_PROFILE" | "CATEGORY" | "PRODUCT" | "BLOG" | "HERO_SLIDE";
 
 export interface UploadedFile {
   fileId: number;

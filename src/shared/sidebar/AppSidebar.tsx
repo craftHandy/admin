@@ -26,6 +26,7 @@ import {
   CalendarDays,
   Layers,
   FileText,
+  MonitorPlay,
   Building2,
   LogOut,
 } from "lucide-react";
@@ -82,6 +83,13 @@ const menuItems: any = [
     label: "Blogs",
     icon: FileText,
     path: "/blogs",
+    children: [],
+  },
+  {
+    id: "hero-slides",
+    label: "Hero Slides",
+    icon: MonitorPlay,
+    path: "/hero-slides",
     children: [],
   },
 ];

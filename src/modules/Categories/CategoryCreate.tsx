@@ -5,11 +5,13 @@ import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/lib/api";
+import { fileApi } from "@/lib/file-api";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormInput } from "@/components/ui/form-controls";
 import { useDropzone } from "react-dropzone";
+import { useLocalFilePreview } from "@/hooks/use-local-file-preview";
 
 const categoryFormSchema = z.object({
     categoryName: z.string().min(1, "Category name is required"),
@@ -24,6 +26,7 @@ export default function CategoryCreate() {
     const navigate = useNavigate();
     const { id } = useParams();
     const queryClient = useQueryClient();
+    const { previewUrl: localPreview, setPreview, clearPreview } = useLocalFilePreview();
 
     const { control, handleSubmit, reset, watch, setValue } = useForm<CategoryFormValues>({
         resolver: zodResolver(categoryFormSchema),
@@ -35,6 +38,9 @@ export default function CategoryCreate() {
     });
 
     const existingFile = watch("file");
+
+    const fileSrc = typeof existingFile === "string" && existingFile ? existingFile : null;
+    const previewSrc = localPreview ?? fileSrc;
 
     const { data: existing } = useQuery({
         queryKey: ["category", id],
@@ -88,21 +94,11 @@ export default function CategoryCreate() {
         multiple: false,
         onDrop: async (acceptedFiles) => {
             if (acceptedFiles.length === 0) return;
-            const file = acceptedFiles[0];
-            const fd = new FormData();
-            fd.append("file", file);
+            setPreview(acceptedFiles[0]);
             try {
-                const res = await api.post("/api/v1/file/upload?fileContext=CATEGORY", fd, {
-                    headers: { "Content-Type": "multipart/form-data" },
-                });
-                const uploaded = res.data?.data ?? res.data;
-                const uploadedFile = Array.isArray(uploaded) ? uploaded[0] : uploaded;
-                const fileId = uploadedFile?.fileId ?? uploadedFile?.id;
-                if (fileId) {
-                    setValue("file", fileId, { shouldValidate: true });
-                } else {
-                    const url = uploadedFile?.fileUrl ?? uploadedFile?.url ?? uploadedFile;
-                    setValue("file", url, { shouldValidate: true });
+                const uploaded = await fileApi.uploadSingle(acceptedFiles[0], "CATEGORY");
+                if (uploaded?.fileId) {
+                    setValue("file", uploaded.fileId, { shouldValidate: true });
                 }
             } catch {
                 toast.error("Failed to upload image");
@@ -111,6 +107,7 @@ export default function CategoryCreate() {
     });
 
     const removeFile = () => {
+        clearPreview();
         setValue("file", "", { shouldValidate: true });
     };
 
@@ -155,9 +152,9 @@ export default function CategoryCreate() {
 
                 <div className="space-y-2">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Image</label>
-                    {existingFile && typeof existingFile === "string" && existingFile ? (
+                    {previewSrc ? (
                         <div className="relative rounded-lg overflow-hidden border border-border">
-                            <img src={existingFile} alt="Category" className="w-full h-40 object-cover" />
+                            <img src={previewSrc} alt="Category" className="w-full h-40 object-cover" />
                             <button type="button" onClick={removeFile} className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80">
                                 <X className="h-4 w-4" />
                             </button>
