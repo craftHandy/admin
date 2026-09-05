@@ -17,15 +17,7 @@ export default function BlogView() {
         },
     });
 
-    const { data: tagsData } = useQuery({
-        queryKey: ["tags"],
-        queryFn: async () => {
-            const res = await api.get("/api/v1/admin/tag");
-            return res.data?.data ?? res.data;
-        },
-    });
-
-    const blogTags = tagsData?.filter((t: any) => data?.tagIds?.includes(t.id)) ?? [];
+    const blogTags = data?.tags ?? [];
 
     if (isLoading) {
         return (
