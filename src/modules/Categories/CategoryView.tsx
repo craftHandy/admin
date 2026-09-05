@@ -13,7 +13,7 @@ export default function CategoryView() {
     const { data, isLoading, isError, error } = useQuery<ApiResponse<Category>>({
         queryKey: ["category", id],
         queryFn: async () => {
-            const response = await api.get(`/api/v1/category/${id}`);
+            const response = await api.get(`/api/v1/admin/category/${id}`);
             return response.data;
         },
         enabled: !!id,
