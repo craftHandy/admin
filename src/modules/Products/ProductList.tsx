@@ -59,7 +59,7 @@ export default function ProductList() {
   const { data, isLoading, isError, error } = useQuery<ApiPaginatedResponse<Product[]>>({
     queryKey: ["products", page, size, sortBy, direction],
     queryFn: async () => {
-      const response = await api.get("/api/v1/product", {
+      const response = await api.get("/api/v1/admin/product", {
         params: {
           page,
           size,
