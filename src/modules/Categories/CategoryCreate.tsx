@@ -57,7 +57,7 @@ export default function CategoryCreate() {
                 categoryName: existing.categoryName ?? "",
                 categoryCode: existing.categoryCode ?? "",
                 description: existing.description ?? "",
-                fileId: existing.file ?? "",
+                fileId: existing.fileId ?? "",
             });
         }
     }, [existing, reset]);
