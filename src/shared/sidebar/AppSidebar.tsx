@@ -140,7 +140,7 @@ function AppSidebar() {
                   <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                     <Building2 className="size-4" />
                   </div>
-                  <span className="font-semibold tracking-tight">Ratnagiri Admin</span>
+                  <span className="font-semibold tracking-tight">Ratna Treasure <p>Handicraft</p></span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

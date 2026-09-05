@@ -68,7 +68,7 @@ export default function CategoryCreate() {
             if (body.file === "") body.file = undefined;
 
             if (id) {
-                const response = await api.put(`/api/v1/admin/categories/${id}`, body);
+                const response = await api.put(`/api/v1/admin//category/${id}`, body);
                 return response.data;
             }
             const response = await api.post("/api/v1/admin/add-category", body);
