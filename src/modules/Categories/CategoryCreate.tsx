@@ -46,7 +46,7 @@ export default function CategoryCreate() {
         queryKey: ["category", id],
         enabled: Boolean(id),
         queryFn: async () => {
-            const response = await api.get(`/api/v1/category/${id}`);
+            const response = await api.get(`/api/v1/admin/category/${id}`);
             return response.data?.data ?? response.data;
         },
     });
