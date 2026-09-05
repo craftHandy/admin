@@ -40,7 +40,7 @@ export default function CategoryList() {
     const { data, isLoading, isError, error } = useQuery<ApiPaginatedResponse<Category[]>>({
         queryKey: ["categories", page, size],
         queryFn: async () => {
-            const response = await api.get("/api/v1/category/categories", {
+            const response = await api.get("/api/v1/admin/category", {
                 params: {
                     page,
                     size,
