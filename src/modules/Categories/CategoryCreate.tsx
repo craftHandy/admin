@@ -17,7 +17,7 @@ const categoryFormSchema = z.object({
     categoryName: z.string().min(1, "Category name is required"),
     categoryCode: z.string().min(1, "Category code is required"),
     description: z.string().min(1, "Description is required"),
-    file: z.union([z.number(), z.string()]).optional(),
+    fileId: z.union([z.number(), z.string()]).optional(),
 });
 
 type CategoryFormValues = z.infer<typeof categoryFormSchema>;
@@ -37,7 +37,7 @@ export default function CategoryCreate() {
         },
     });
 
-    const existingFile = watch("file");
+    const existingFile = watch("fileId");
 
     const fileSrc = typeof existingFile === "string" && existingFile ? existingFile : null;
     const previewSrc = localPreview ?? fileSrc;
@@ -57,7 +57,7 @@ export default function CategoryCreate() {
                 categoryName: existing.categoryName ?? "",
                 categoryCode: existing.categoryCode ?? "",
                 description: existing.description ?? "",
-                file: existing.file ?? "",
+                fileId: existing.file ?? "",
             });
         }
     }, [existing, reset]);
@@ -98,7 +98,7 @@ export default function CategoryCreate() {
             try {
                 const uploaded = await fileApi.uploadSingle(acceptedFiles[0], "CATEGORY");
                 if (uploaded?.fileId) {
-                    setValue("file", uploaded.fileId, { shouldValidate: true });
+                    setValue("fileId", uploaded.fileId, { shouldValidate: true });
                 }
             } catch {
                 toast.error("Failed to upload image");
@@ -108,7 +108,7 @@ export default function CategoryCreate() {
 
     const removeFile = () => {
         clearPreview();
-        setValue("file", "", { shouldValidate: true });
+        setValue("fileId", "", { shouldValidate: true });
     };
 
     return (
