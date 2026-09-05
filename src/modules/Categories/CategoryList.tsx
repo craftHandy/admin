@@ -52,7 +52,7 @@ export default function CategoryList() {
 
     const deleteMutation = useMutation({
         mutationFn: async (id: number) => {
-            await api.delete(`/api/v1/admin/categories/${id}`);
+            await api.delete(`/api/v1/admin/category/${id}`);
         },
         onSuccess: () => {
             toast.success("Category deleted successfully");
