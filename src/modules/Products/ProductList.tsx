@@ -73,7 +73,7 @@ export default function ProductList() {
   // Delete product mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await api.delete(`/api/v1/product/${id}`);
+      await api.delete(`/api/v1/admin/product/${id}`);
     },
     onSuccess: () => {
       toast.success("Product deleted successfully");
