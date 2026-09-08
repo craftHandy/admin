@@ -8,7 +8,7 @@ export const useCategoryQuery = () => {
     return useQuery<ApiResponse<Category[]>>({
         queryKey: ["category"],
         queryFn: async () => {
-            const response = await api.get("/api/v1/category/all");
+            const response = await api.get("/api/v1/public/category/all");
             return response.data;
         },
     });
