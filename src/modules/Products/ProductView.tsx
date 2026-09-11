@@ -448,6 +448,8 @@ import { MultiSelect } from "@/components/ui/multi-select";
 
 import {
   ProductImageUpload,
+  getProductImageFileId,
+  resolveProductImageUrl,
   type ProductImageItem,
 } from "@/modules/Products/ProductImageUpload";
 
@@ -625,6 +627,12 @@ const productFormSchema =
 
           path:
             z.string().optional(),
+
+          key:
+            z.string().optional(),
+
+          file:
+            z.any().optional(),
         }),
       )
       .min(
@@ -807,6 +815,7 @@ export default function ProductView() {
     setValue,
     watch,
     reset,
+    formState: { errors },
   } =
     useForm<ProductFormValues>({
       resolver:
@@ -844,159 +853,111 @@ export default function ProductView() {
   const getFormValues = (
     data: any,
   ): ProductFormValues => {
+    const toStringArray = (value: unknown): string[] => {
+      if (Array.isArray(value)) {
+        return value
+          .map((item: any) => {
+            if (typeof item === "string") return item;
+            return (
+              item?.name ??
+              item?.materialName ??
+              item?.occasionName ??
+              item?.title ??
+              item?.value ??
+              item?.label ??
+              ""
+            );
+          })
+          .map((s: string) => String(s).trim())
+          .filter(Boolean);
+      }
+      if (typeof value === "string" && value.trim().length > 0) {
+        return value.split(",").map((s) => s.trim()).filter(Boolean);
+      }
+      return [];
+    };
+
+    const pickNumber = (...candidates: unknown[]): number => {
+      for (const candidate of candidates) {
+        if (candidate === null || candidate === undefined || candidate === "") continue;
+        const num = Number(candidate);
+        if (!Number.isNaN(num)) return num;
+      }
+      return 0;
+    };
+
+    const dimensions =
+      data?.dimensions ?? data?.dimension ?? data?.size ?? {};
+
+    const categoryId = pickNumber(
+      data?.categoryId,
+      data?.category?.id,
+      data?.category?.categoryId,
+      data?.category,
+    );
+
+    const rawImages: unknown[] = Array.isArray(data?.images)
+      ? data.images
+      : Array.isArray(data?.productImages)
+        ? data.productImages
+        : [];
+
+    const images = rawImages
+      .map((image: any, index: number) => {
+        const fileId = getProductImageFileId(image);
+        const resolvedUrl = resolveProductImageUrl(image as ProductImageItem);
+        return {
+          fileId,
+          alt:
+            (typeof image?.alt === "string" && image.alt.trim().length > 0
+              ? image.alt
+              : typeof image?.altText === "string" && image.altText.trim().length > 0
+                ? image.altText
+                : data?.title
+                  ? `${data.title} image ${index + 1}`
+                  : `Product image ${index + 1}`),
+          isPrimary:
+            typeof image?.isPrimary === "boolean"
+              ? image.isPrimary
+              : index === 0,
+          previewUrl: resolvedUrl,
+          url: image?.url,
+          fileUrl: image?.fileUrl,
+          imageUrl: image?.imageUrl,
+          path: image?.path,
+          key: image?.key,
+          file: image?.file,
+        };
+      })
+      .filter((image) => image.fileId > 0 || Boolean(image.previewUrl));
+
+    if (images.length > 0 && !images.some((img) => img.isPrimary)) {
+      images[0].isPrimary = true;
+    }
+
     return {
-      title:
-        data?.title ?? "",
-
-      slug:
-        data?.slug ?? "",
-
-      price: Number(
-        data?.price ?? 0,
+      title: data?.title ?? "",
+      slug: data?.slug ?? "",
+      price: pickNumber(data?.price),
+      discountPercentage: pickNumber(data?.discountPercentage, data?.discount),
+      description: data?.description ?? "",
+      materials: toStringArray(data?.materials),
+      craftType: data?.craftType ?? data?.craft_type ?? "",
+      origin: data?.origin ?? data?.country ?? "",
+      occasions: toStringArray(data?.occasions),
+      height: pickNumber(data?.height, dimensions?.height),
+      width: pickNumber(data?.width, dimensions?.width),
+      depth: pickNumber(data?.depth, dimensions?.depth, dimensions?.length),
+      weight: pickNumber(data?.weight, dimensions?.weight),
+      stockStatus: String(
+        data?.stockStatus ?? data?.stock_status ?? data?.status ?? "IN_STOCK",
+      ).toUpperCase(),
+      stockQuantity: Math.trunc(
+        pickNumber(data?.stockQuantity, data?.quantity, data?.stock, data?.stockQty),
       ),
-
-      discountPercentage:
-        Number(
-          data?.discountPercentage ??
-            0,
-        ),
-
-      description:
-        data?.description ??
-        "",
-
-      materials:
-        Array.isArray(
-          data?.materials,
-        )
-          ? data.materials
-              .map(
-                (
-                  item: any,
-                ) =>
-                  typeof item ===
-                  "string"
-                    ? item
-                    : item?.name,
-              )
-              .filter(
-                Boolean,
-              )
-          : [],
-
-      craftType:
-        data?.craftType ?? "",
-
-      origin:
-        data?.origin ?? "",
-
-      occasions:
-        Array.isArray(
-          data?.occasions,
-        )
-          ? data.occasions
-              .map(
-                (
-                  item: any,
-                ) =>
-                  typeof item ===
-                  "string"
-                    ? item
-                    : item?.name,
-              )
-              .filter(
-                Boolean,
-              )
-          : [],
-
-      height: Number(
-        data?.height ?? 0,
-      ),
-
-      width: Number(
-        data?.width ?? 0,
-      ),
-
-      depth: Number(
-        data?.depth ?? 0,
-      ),
-
-      weight: Number(
-        data?.weight ?? 0,
-      ),
-
-      stockStatus:
-        data?.stockStatus ??
-        "IN_STOCK",
-
-      stockQuantity:
-        Number(
-          data?.stockQuantity ??
-            0,
-        ),
-
-      featured:
-        Boolean(
-          data?.featured,
-        ),
-
-      categoryId:
-        Number(
-          data?.categoryId ??
-            0,
-        ),
-
-      images:
-        Array.isArray(
-          data?.images,
-        )
-          ? data.images
-              .map(
-                (
-                  image: any,
-                ) => ({
-                  fileId:
-                    Number(
-                      image.fileId,
-                    ),
-
-                  alt:
-                    image.alt ??
-                    "",
-
-                  isPrimary:
-                    Boolean(
-                      image.isPrimary,
-                    ),
-
-                  previewUrl:
-                    image.previewUrl ??
-                    image.url ??
-                    image.fileUrl ??
-                    image.imageUrl ??
-                    image.path,
-
-                  url:
-                    image.url,
-
-                  fileUrl:
-                    image.fileUrl,
-
-                  imageUrl:
-                    image.imageUrl,
-
-                  path:
-                    image.path,
-                }),
-              )
-              .filter(
-                (
-                  image: ProductImageItem,
-                ) =>
-                  image.fileId >
-                  0,
-              )
-          : [],
+      featured: Boolean(data?.featured ?? data?.isFeatured ?? false),
+      categoryId,
+      images: images as ProductFormValues["images"],
     };
   };
 
@@ -1014,10 +975,17 @@ export default function ProductView() {
         product,
       ),
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    product,
-    reset,
+    product?.id,
   ]);
+
+  /* ------------------------------------------------------------------------ */
+  /*                           Watched values                                  */
+  /* ------------------------------------------------------------------------ */
+
+  const watchImages =
+    watch("images") ?? [];
 
   /* ------------------------------------------------------------------------ */
   /*                           Slug                                           */
@@ -1094,10 +1062,18 @@ export default function ProductView() {
         },
 
       onSuccess:
-        () => {
+        (response) => {
           toast.success(
             "Product updated successfully!",
           );
+
+          const updated =
+            (response as any)?.data ??
+            response;
+
+          if (updated && typeof updated === "object") {
+            reset(getFormValues({ ...product, ...updated }));
+          }
 
           setIsEditing(
             false,
@@ -1130,6 +1106,31 @@ export default function ProductView() {
     (
       data: ProductFormValues,
     ) => {
+      const uploading = (data.images ?? []).some(
+        (image: any) => !Number(image?.fileId),
+      );
+      if (uploading) {
+        toast.error("Images are still uploading. Please wait.");
+        return;
+      }
+
+      const normalizedImages = (data.images ?? []).map(
+        (image: any, index: number) => ({
+          fileId: Number(image.fileId),
+          alt:
+            typeof image.alt === "string" && image.alt.trim().length > 0
+              ? image.alt.trim()
+              : `${data.title || "Product"} image ${index + 1}`,
+          isPrimary: Boolean(image.isPrimary),
+        }),
+      );
+      if (
+        normalizedImages.length > 0 &&
+        !normalizedImages.some((img) => img.isPrimary)
+      ) {
+        normalizedImages[0].isPrimary = true;
+      }
+
       const payload = {
         title:
           data.title,
@@ -1202,27 +1203,13 @@ export default function ProductView() {
             data.categoryId,
           ),
 
-        images:
-          data.images.map(
-            (
-              image: any,
-            ) => ({
-              fileId:
-                Number(
-                  image.fileId,
-                ),
-
-              alt:
-                image.alt ??
-                "",
-
-              isPrimary:
-                Boolean(
-                  image.isPrimary,
-                ),
-            }),
-          ),
+        images: normalizedImages,
       };
+
+      console.debug("Product update payload:", payload);
+      if (Object.keys(errors ?? {}).length > 0) {
+        console.debug("Product form errors:", errors);
+      }
 
       updateMutation.mutate(
         payload,
@@ -1576,8 +1563,9 @@ export default function ProductView() {
               ) : (
                 <ProductImagePreview
                   images={
-                    product.images ??
-                    []
+                    (watchImages?.length
+                      ? watchImages
+                      : (product.images ?? product.productImages ?? [])) as ProductImageItem[]
                   }
                   title={
                     product.title ??
@@ -1902,12 +1890,7 @@ function ProductImagePreview({
           image,
           index,
         ) => {
-          const imageUrl =
-            image.previewUrl ??
-            image.url ??
-            image.fileUrl ??
-            image.imageUrl ??
-            image.path;
+          const imageUrl = resolveProductImageUrl(image);
 
           return (
             <div

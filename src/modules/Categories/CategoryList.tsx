@@ -15,13 +15,25 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { ApiPaginatedResponse } from "@/utils/interface";
 import { tableActionIcons, TableActions } from "@/components/ui/table-actions";
 
+export interface CategoryFile {
+    id: number;
+    key: string;
+}
+
 export interface Category {
     id: number;
     categoryName: string;
     categoryCode: string;
     description?: string;
-    file?: string
+    file?: CategoryFile | string;
+    fileId?: number | null;
 }
+
+export const getCategoryImageUrl = (category?: Pick<Category, "file"> | null): string | null => {
+    if (!category?.file) return null;
+    if (typeof category.file === "string") return category.file;
+    return category.file.key ?? null;
+};
 
 
 export default function CategoryList() {

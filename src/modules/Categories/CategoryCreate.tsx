@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,7 +17,7 @@ const categoryFormSchema = z.object({
     categoryName: z.string().min(1, "Category name is required"),
     categoryCode: z.string().min(1, "Category code is required"),
     description: z.string().min(1, "Description is required"),
-    fileId: z.union([z.number(), z.string()]).optional(),
+    fileId: z.number().optional().nullable(),
 });
 
 type CategoryFormValues = z.infer<typeof categoryFormSchema>;
@@ -28,19 +28,19 @@ export default function CategoryCreate() {
     const queryClient = useQueryClient();
     const { previewUrl: localPreview, setPreview, clearPreview } = useLocalFilePreview();
 
-    const { control, handleSubmit, reset, watch, setValue } = useForm<CategoryFormValues>({
+    const { control, handleSubmit, reset, setValue } = useForm<CategoryFormValues>({
         resolver: zodResolver(categoryFormSchema),
         defaultValues: {
             categoryName: "",
             categoryCode: "",
             description: "",
+            fileId: null,
         },
     });
 
-    const existingFile = watch("fileId");
-
-    const fileSrc = typeof existingFile === "string" && existingFile ? existingFile : null;
-    const previewSrc = localPreview ?? fileSrc;
+    const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const previewSrc = localPreview ?? existingImageUrl;
 
     const { data: existing } = useQuery({
         queryKey: ["category", id],
@@ -53,19 +53,26 @@ export default function CategoryCreate() {
 
     useEffect(() => {
         if (existing) {
+            const fileId = typeof existing.file === "object" && existing.file !== null
+                ? existing.file.id
+                : (existing.fileId ?? null);
+            const fileUrl = typeof existing.file === "object" && existing.file !== null
+                ? (existing.file.key ?? null)
+                : (typeof existing.file === "string" ? existing.file : null);
             reset({
                 categoryName: existing.categoryName ?? "",
                 categoryCode: existing.categoryCode ?? "",
                 description: existing.description ?? "",
-                fileId: existing.fileId ?? "",
+                fileId: fileId ?? null,
             });
+            setExistingImageUrl(fileUrl);
         }
     }, [existing, reset]);
 
     const mutation = useMutation({
         mutationFn: async (payload: CategoryFormValues) => {
-            const body: any = { ...payload };
-            if (body.file === "") body.file = undefined;
+            const body: Record<string, unknown> = { ...payload };
+            if (!body.fileId) delete body.fileId;
 
             if (id) {
                 const response = await api.put(`/api/v1/admin/category/${id}`, body);
@@ -75,7 +82,9 @@ export default function CategoryCreate() {
             return response.data;
         },
         onSuccess: () => {
+            toast.success(id ? "Category updated successfully" : "Category created successfully");
             queryClient.invalidateQueries({ queryKey: ["categories"] });
+            queryClient.invalidateQueries({ queryKey: ["category", id] });
             navigate("/categories");
         },
         onError: (error: any) => {
@@ -92,23 +101,32 @@ export default function CategoryCreate() {
         accept: { "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"] },
         maxFiles: 1,
         multiple: false,
+        disabled: isUploading,
         onDrop: async (acceptedFiles) => {
-            if (acceptedFiles.length === 0) return;
-            setPreview(acceptedFiles[0]);
+            if (acceptedFiles.length === 0 || isUploading) return;
+            const file = acceptedFiles[0];
+            setIsUploading(true);
             try {
-                const uploaded = await fileApi.uploadSingle(acceptedFiles[0], "CATEGORY");
+                const uploaded = await fileApi.uploadSingle(file, "CATEGORY");
                 if (uploaded?.fileId) {
+                    setPreview(file);
                     setValue("fileId", uploaded.fileId, { shouldValidate: true });
+                    if (uploaded.fileUrl) setExistingImageUrl(uploaded.fileUrl);
+                } else {
+                    toast.error("Failed to upload image");
                 }
             } catch {
                 toast.error("Failed to upload image");
+            } finally {
+                setIsUploading(false);
             }
         },
     });
 
     const removeFile = () => {
         clearPreview();
-        setValue("fileId", "", { shouldValidate: true });
+        setExistingImageUrl(null);
+        setValue("fileId", null, { shouldValidate: true });
     };
 
     return (
@@ -152,7 +170,13 @@ export default function CategoryCreate() {
 
                 <div className="space-y-2">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Image</label>
-                    {previewSrc ? (
+                    {isUploading ? (
+                        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-primary bg-primary/5 px-4 py-10">
+                            <Loader2 className="mb-2 h-8 w-8 animate-spin text-primary" />
+                            <p className="text-sm font-medium text-foreground">Uploading...</p>
+                            <p className="mt-1 text-xs text-muted-foreground">Please wait while your image uploads</p>
+                        </div>
+                    ) : previewSrc ? (
                         <div className="relative rounded-lg overflow-hidden border border-border">
                             <img src={previewSrc} alt="Category" className="w-full h-40 object-cover" />
                             <button type="button" onClick={removeFile} className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80">
@@ -170,7 +194,7 @@ export default function CategoryCreate() {
 
                 <div className="flex justify-end gap-3">
                     <Button type="button" variant="outline" onClick={() => navigate("/categories")}>Cancel</Button>
-                    <Button type="submit" disabled={mutation.isPending} className="min-w-36">
+                    <Button type="submit" disabled={mutation.isPending || isUploading} className="min-w-36">
                         {mutation.isPending ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

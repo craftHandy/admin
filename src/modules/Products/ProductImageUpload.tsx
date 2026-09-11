@@ -264,6 +264,8 @@ import { Input } from "@/components/ui/input";
 
 import { fileApi } from "@/lib/file-api";
 
+import { toast } from "sonner";
+
 /* -------------------------------------------------------------------------- */
 /*                              Image Type                                    */
 /* -------------------------------------------------------------------------- */
@@ -272,25 +274,49 @@ export type ProductImageItem = {
   fileId: number;
   alt: string;
   isPrimary: boolean;
-
-  /**
-   * Used for displaying an image.
-   *
-   * Existing API image:
-   *   previewUrl / url / fileUrl / imageUrl / path
-   *
-   * Newly uploaded local file:
-   *   blob:http://...
-   */
   previewUrl?: string;
-
-  /**
-   * Optional backend URL fields.
-   */
   url?: string;
   fileUrl?: string;
   imageUrl?: string;
   path?: string;
+  key?: string;
+  file?: string | { key?: string; url?: string; fileUrl?: string; path?: string; id?: number } | null;
+};
+
+export const resolveProductImageUrl = (
+  image: ProductImageItem | Record<string, unknown> | null | undefined,
+): string | undefined => {
+  if (!image || typeof image !== "object") return undefined;
+  const item = image as Record<string, unknown>;
+  const preview = item.previewUrl as string | undefined;
+  if (preview) return preview;
+  for (const field of ["url", "fileUrl", "imageUrl", "path", "key"] as const) {
+    const value = item[field] as string | undefined;
+    if (typeof value === "string" && value.length > 0) return value;
+  }
+  const file = item.file as unknown;
+  if (typeof file === "string" && file.length > 0) return file;
+  if (file && typeof file === "object") {
+    const nested = file as Record<string, unknown>;
+    for (const field of ["fileUrl", "url", "key", "path", "previewUrl"] as const) {
+      const value = nested[field] as string | undefined;
+      if (typeof value === "string" && value.length > 0) return value;
+    }
+  }
+  return undefined;
+};
+
+export const getProductImageFileId = (image: unknown): number => {
+  if (!image || typeof image !== "object") return 0;
+  const item = image as Record<string, unknown>;
+  const direct =
+    item.fileId ?? item.file_id ?? item.id;
+  const nestedFile = item.file as Record<string, unknown> | undefined;
+  const nestedId =
+    nestedFile && typeof nestedFile === "object"
+      ? (nestedFile.id ?? nestedFile.fileId)
+      : undefined;
+  return Number(direct ?? nestedId ?? 0);
 };
 
 /* -------------------------------------------------------------------------- */
@@ -432,7 +458,7 @@ export function ProductImageUpload<
 
                 return {
                   fileId: 0,
-                  alt: "",
+                  alt: file.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "),
                   isPrimary:
                     images.length ===
                       0 &&
@@ -495,6 +521,10 @@ export function ProductImageUpload<
                           Number(
                             uploadedFile.fileId,
                           ),
+                        fileUrl:
+                          uploadedFile.fileUrl ??
+                          image.fileUrl ??
+                          image.previewUrl,
                       };
                     }
                   }
@@ -507,6 +537,7 @@ export function ProductImageUpload<
               updatedImages,
             );
           } catch (error) {
+            toast.error("Image upload failed. Please try again.");
             console.error(
               "Product image upload failed:",
               error,
@@ -543,8 +574,6 @@ export function ProductImageUpload<
             setImages(images);
 
             field.onChange(images);
-
-            throw error;
           } finally {
             setUploading(false);
           }
@@ -671,35 +700,8 @@ export function ProductImageUpload<
         const resolveImageUrl = (
           image: ProductImageItem,
         ) => {
-          /**
-           * Newly uploaded image.
-           */
-          if (image.previewUrl) {
-            return image.previewUrl;
-          }
-
-          /**
-           * Backend-provided URLs.
-           */
-          if (image.url) {
-            return image.url;
-          }
-
-          if (image.fileUrl) {
-            return image.fileUrl;
-          }
-
-          if (image.imageUrl) {
-            return image.imageUrl;
-          }
-
-          if (image.path) {
-            return image.path;
-          }
-
-          /**
-           * Optional file API resolver.
-           */
+          const resolved = resolveProductImageUrl(image);
+          if (resolved) return resolved;
           if (
             image.fileId &&
             getFileUrl
@@ -708,7 +710,6 @@ export function ProductImageUpload<
               image.fileId,
             );
           }
-
           return undefined;
         };
 
