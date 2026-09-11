@@ -4,6 +4,7 @@ import { ArrowLeft, AlertCircle, Loader2, Image as ImageIcon } from "lucide-reac
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import type { Category } from "./CategoryList";
+import { getCategoryImageUrl } from "./CategoryList";
 import type { ApiResponse } from "@/utils/interface";
 
 export default function CategoryView() {
@@ -45,16 +46,21 @@ export default function CategoryView() {
         );
     }
 
+    const imageUrl = getCategoryImageUrl(category);
+
     return (
         <div className="space-y-6 max-w-5xl mx-auto pb-12">
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate("/categories")} className="h-9 w-9 rounded-full border">
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">{category.categoryName}</h1>
-                    <p className="text-sm text-muted-foreground">#{category.id} · {category.categoryCode}</p>
+            <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <Button variant="ghost" size="icon" onClick={() => navigate("/categories")} className="h-9 w-9 rounded-full border">
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-foreground">{category.categoryName}</h1>
+                        <p className="text-sm text-muted-foreground">#{category.id} · {category.categoryCode}</p>
+                    </div>
                 </div>
+                <Button variant="outline" onClick={() => navigate(`/categories/${category.id}/edit`)}>Edit Category</Button>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -80,9 +86,9 @@ export default function CategoryView() {
 
                 <div className="rounded-xl border bg-card p-6 shadow-sm">
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Image</p>
-                    {category.file ? (
+                    {imageUrl ? (
                         <img
-                            src={category.file}
+                            src={imageUrl}
                             alt={category.categoryName}
                             className="mt-4 h-64 w-full rounded-lg object-cover"
                         />
