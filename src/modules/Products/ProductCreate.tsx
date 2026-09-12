@@ -23,13 +23,13 @@ import { useCategoryQuery } from "@/shared/api/query";
 const productFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   slug: z.string().min(1, "Slug is required"),
-  price: z.coerce.number().min(0, "Price must be non-negative").nonnegative(),
+  price: z.coerce.number({error:'price is required.'}).min(1, "price is required.").nonnegative(),
   discountPercentage: z.coerce.number().min(0).max(100).default(0),
   description: z.string().min(1, "Description is required"),
-  materials: z.array(z.string()).default([]),
+  materialIds: z.array(z.number()).default([]),
   craftType: z.string().min(1, "Craft type is required"),
   origin: z.string().min(1, "Origin is required"),
-  occasions: z.array(z.string()).default([]),
+  occasionIds: z.array(z.number()).default([]),
   height: z.coerce.number().min(0).default(0.1),
   width: z.coerce.number().min(0).default(0.1),
   depth: z.coerce.number().min(0).default(0.1),
@@ -56,22 +56,22 @@ export default function ProductCreate() {
       return res.data?.data ?? res.data;
     },
   });
-  const materialOptions = (materialsData ?? []).map((m: any) => ({ value: m.name, label: m.name }));
+  const materialOptions = (materialsData ?? []).map((m: any) => ({ value: m.id, label: m.name }));
 
-  const { data: occasionsData } = useQuery({
-    queryKey: ["occasions"],
+  const { data: occasionIdsData } = useQuery({
+    queryKey: ["occasionIds"],
     queryFn: async () => {
       const res = await api.get("/api/v1/admin/occasion");
       return res.data?.data ?? res.data;
     },
   });
-  const occasionOptions = (occasionsData ?? []).map((o: any) => ({ value: o.name, label: o.name }));
-
+  const occasionOptions = (occasionIdsData ?? []).map((o: any) => ({ value: o.id, label: o.name }));
   const {
     handleSubmit,
     control,
     setValue,
     watch,
+    formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
@@ -80,10 +80,10 @@ export default function ProductCreate() {
       price: 0,
       discountPercentage: 0,
       description: "",
-      materials: [],
+      materialIds: [],
       craftType: "",
       origin: "",
-      occasions: [],
+      occasionIds: [],
       height: 0,
       width: 0,
       depth: 0,
@@ -95,6 +95,8 @@ export default function ProductCreate() {
       images: [],
     },
   });
+console.log({errors})
+console.log(watch('materialIds'))
 
   const watchTitle = watch("title");
 
@@ -132,10 +134,10 @@ export default function ProductCreate() {
       price: data.price,
       discountPercentage: data.discountPercentage,
       description: data.description,
-      materials: data.materials,
+      materialIds: data.materialIds,
       craftType: data.craftType,
       origin: data.origin,
-      occasions: data.occasions,
+      occasionIds: data.occasionIds,
       height: data.height,
       width: data.width,
       depth: data.depth,
@@ -333,10 +335,10 @@ export default function ProductCreate() {
                   placeholder="e.g. Nepal, Morocco"
                 />
 
-                <Controller name="materials" control={control} render={({ field }) => (
+                <Controller name="materialIds" control={control} render={({ field }) => (
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Materials</label>
-                    <MultiSelect<string>
+                    <MultiSelect<number>
                       options={materialOptions}
                       selected={field.value ?? []}
                       onChange={field.onChange}
@@ -345,14 +347,14 @@ export default function ProductCreate() {
                   </div>
                 )} />
 
-                <Controller name="occasions" control={control} render={({ field }) => (
+                <Controller name="occasionIds" control={control} render={({ field }) => (
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Occasions</label>
-                    <MultiSelect<string>
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">occasions</label>
+                    <MultiSelect<number>
                       options={occasionOptions}
                       selected={field.value ?? []}
                       onChange={field.onChange}
-                      placeholder="Select occasions..."
+                      placeholder="Select occasionIds..."
                     />
                   </div>
                 )} />
