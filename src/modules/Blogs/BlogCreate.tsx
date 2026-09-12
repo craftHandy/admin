@@ -71,17 +71,16 @@ export default function BlogCreate() {
             return res.data?.data ?? res.data;
         },
     });
-
     useEffect(() => {
         if (existing) {
             reset({
                 title: existing.title ?? "",
                 slug: existing.slug ?? "",
-                coverImage: existing.coverImage ?? "",
-                coverFileId: existing.coverFileId ?? null,
+                coverImage: existing.coverImage ?? existing.cover_image ?? "",
+                coverFileId: existing.coverFileId ?? existing.cover_file_id ?? existing.fileId ?? null,
                 excerpt: existing.excerpt ?? "",
-                content: existing.content ?? "",
-                tagIds: existing.tags?.map((t: any) => t.id) ?? existing.tagIds ?? [],
+                content: existing.content ?? existing.body ?? existing.description ?? "",
+                tagIds: existing.tags?.map((t: any) => t.id) ?? existing.tagIds ?? existing.tag_ids ?? [],
                 status: existing.status ?? "DRAFT",
             });
         }
