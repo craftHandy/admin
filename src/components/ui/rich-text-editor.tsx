@@ -30,7 +30,7 @@ import {
   RemoveFormatting,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -532,6 +532,20 @@ export function RichTextEditor({
       },
     },
   });
+
+  const normalizeHtml = (html: string) =>
+    html === "<p></p>" || html === "<p></p><p></p>" ? "" : html;
+
+  useEffect(() => {
+    if (!editor) return;
+    const current = normalizeHtml(editor.getHTML());
+    const next = normalizeHtml(value || "");
+    if (current !== next) {
+      editor.commands.setContent(value || "<p></p>", {
+        emitUpdate: false,
+      } as unknown as Record<string, unknown>);
+    }
+  }, [editor, value]);
 
   return (
     <div
