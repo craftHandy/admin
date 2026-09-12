@@ -413,6 +413,7 @@ import { z } from "zod";
 import {
   useMutation,
   useQuery,
+  useQueryClient,
 } from "@tanstack/react-query";
 
 import {
@@ -503,8 +504,8 @@ const productFormSchema =
         "Description is required",
       ),
 
-    materials: z
-      .array(z.string())
+    materialIds: z
+      .array(z.coerce.number().int())
       .default([]),
 
     craftType: z
@@ -521,8 +522,8 @@ const productFormSchema =
         "Origin is required",
       ),
 
-    occasions: z
-      .array(z.string())
+    occasionIds: z
+      .array(z.coerce.number().int())
       .default([]),
 
     height: z
@@ -662,6 +663,9 @@ export default function ProductView() {
   const location =
     useLocation();
 
+  const queryClient =
+    useQueryClient();
+
   const [isEditing, setIsEditing] =
     useState(() =>
       location.pathname.endsWith(
@@ -765,8 +769,8 @@ export default function ProductView() {
       []
     ).map(
       (item: any) => ({
-        value: item.name,
-        label: item.name,
+        value: Number(item.id),
+        label: item.name ?? String(item.id),
       }),
     );
 
@@ -800,8 +804,8 @@ export default function ProductView() {
       []
     ).map(
       (item: any) => ({
-        value: item.name,
-        label: item.name,
+        value: Number(item.id),
+        label: item.name ?? String(item.id),
       }),
     );
 
@@ -829,10 +833,10 @@ export default function ProductView() {
         price: 0,
         discountPercentage: 0,
         description: "",
-        materials: [],
+        materialIds: [],
         craftType: "",
         origin: "",
-        occasions: [],
+        occasionIds: [],
         height: 0,
         width: 0,
         depth: 0,
@@ -853,28 +857,62 @@ export default function ProductView() {
   const getFormValues = (
     data: any,
   ): ProductFormValues => {
-    const toStringArray = (value: unknown): string[] => {
-      if (Array.isArray(value)) {
-        return value
-          .map((item: any) => {
-            if (typeof item === "string") return item;
-            return (
-              item?.name ??
-              item?.materialName ??
-              item?.occasionName ??
-              item?.title ??
-              item?.value ??
-              item?.label ??
-              ""
-            );
-          })
-          .map((s: string) => String(s).trim())
-          .filter(Boolean);
+    const nameToMaterialId = new Map<string, number>(
+      (materialsResponse ?? []).map((item: any) => [
+        String(item?.name ?? "").toLowerCase(),
+        Number(item?.id),
+      ]),
+    );
+    const nameToOccasionId = new Map<string, number>(
+      (occasionsResponse ?? []).map((item: any) => [
+        String(item?.name ?? "").toLowerCase(),
+        Number(item?.id),
+      ]),
+    );
+
+    const toIdArray = (
+      value: unknown,
+      nameLookup: Map<string, number>,
+    ): number[] => {
+      if (!Array.isArray(value)) {
+        if (typeof value === "number") return [value];
+        return [];
       }
-      if (typeof value === "string" && value.trim().length > 0) {
-        return value.split(",").map((s) => s.trim()).filter(Boolean);
+      const ids: number[] = [];
+      for (const item of value as any[]) {
+        if (typeof item === "number" && Number.isInteger(item)) {
+          ids.push(item);
+          continue;
+        }
+        if (typeof item === "string") {
+          const asNum = Number(item);
+          if (item.trim() !== "" && Number.isInteger(asNum)) {
+            ids.push(asNum);
+            continue;
+          }
+          const lookedUp = nameLookup.get(item.toLowerCase().trim());
+          if (lookedUp !== undefined && !Number.isNaN(lookedUp)) ids.push(lookedUp);
+          continue;
+        }
+        if (item && typeof item === "object") {
+          const directId =
+            item.id ?? item.materialId ?? item.occasionId ?? item.value;
+          if (directId !== undefined && directId !== null && String(directId).trim() !== "") {
+            const num = Number(directId);
+            if (Number.isInteger(num)) {
+              ids.push(num);
+              continue;
+            }
+          }
+          const name =
+            item.name ?? item.materialName ?? item.occasionName ?? item.title ?? item.label;
+          if (typeof name === "string") {
+            const lookedUp = nameLookup.get(name.toLowerCase().trim());
+            if (lookedUp !== undefined && !Number.isNaN(lookedUp)) ids.push(lookedUp);
+          }
+        }
       }
-      return [];
+      return [...new Set(ids)];
     };
 
     const pickNumber = (...candidates: unknown[]): number => {
@@ -941,10 +979,22 @@ export default function ProductView() {
       price: pickNumber(data?.price),
       discountPercentage: pickNumber(data?.discountPercentage, data?.discount),
       description: data?.description ?? "",
-      materials: toStringArray(data?.materials),
+      materialIds: toIdArray(
+        data?.materialIds ??
+          data?.material_ids ??
+          data?.materials ??
+          data?.productMaterials,
+        nameToMaterialId,
+      ),
       craftType: data?.craftType ?? data?.craft_type ?? "",
       origin: data?.origin ?? data?.country ?? "",
-      occasions: toStringArray(data?.occasions),
+      occasionIds: toIdArray(
+        data?.occasionIds ??
+          data?.occasion_ids ??
+          data?.occasions ??
+          data?.productOccasions,
+        nameToOccasionId,
+      ),
       height: pickNumber(data?.height, dimensions?.height),
       width: pickNumber(data?.width, dimensions?.width),
       depth: pickNumber(data?.depth, dimensions?.depth, dimensions?.length),
@@ -979,6 +1029,29 @@ export default function ProductView() {
   }, [
     product?.id,
   ]);
+
+  useEffect(() => {
+    if (!product) return;
+    if (!materialsResponse && !occasionsResponse) return;
+    const next = getFormValues(product);
+    const nextMaterialIds = next.materialIds ?? [];
+    const nextOccasionIds = next.occasionIds ?? [];
+    const currentMaterialIds = (watch("materialIds") as number[] | undefined) ?? [];
+    const currentOccasionIds = (watch("occasionIds") as number[] | undefined) ?? [];
+    if (
+      currentMaterialIds.length === 0 &&
+      nextMaterialIds.length > 0
+    ) {
+      setValue("materialIds", nextMaterialIds, { shouldDirty: false });
+    }
+    if (
+      currentOccasionIds.length === 0 &&
+      nextOccasionIds.length > 0
+    ) {
+      setValue("occasionIds", nextOccasionIds, { shouldDirty: false });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [materialsResponse, occasionsResponse]);
 
   /* ------------------------------------------------------------------------ */
   /*                           Watched values                                  */
@@ -1062,21 +1135,26 @@ export default function ProductView() {
         },
 
       onSuccess:
-        (response) => {
+        () => {
           toast.success(
             "Product updated successfully!",
           );
 
-          const updated =
-            (response as any)?.data ??
-            response;
+          queryClient.invalidateQueries({
+            queryKey: [
+              "product",
+              id,
+            ],
+          });
 
-          if (updated && typeof updated === "object") {
-            reset(getFormValues({ ...product, ...updated }));
-          }
+          queryClient.invalidateQueries({
+            queryKey: [
+              "products",
+            ],
+          });
 
-          setIsEditing(
-            false,
+          navigate(
+            "/products",
           );
         },
 
@@ -1151,9 +1229,7 @@ export default function ProductView() {
         description:
           data.description,
 
-        materials:
-          data.materials ??
-          [],
+        materialIds: (data.materialIds ?? []).map(Number),
 
         craftType:
           data.craftType,
@@ -1161,9 +1237,7 @@ export default function ProductView() {
         origin:
           data.origin,
 
-        occasions:
-          data.occasions ??
-          [],
+        occasionIds: (data.occasionIds ?? []).map(Number),
 
         height:
           Number(
@@ -1712,7 +1786,7 @@ export default function ProductView() {
                 {/* ========================================================== */}
 
                 <Controller
-                  name="materials"
+                  name="materialIds"
                   control={
                     control
                   }
@@ -1725,12 +1799,12 @@ export default function ProductView() {
                         Materials
                       </label>
 
-                      <MultiSelect<string>
+                      <MultiSelect<number>
                         options={
                           materialOptions
                         }
                         selected={
-                          field.value ??
+                          (field.value as number[] | undefined) ??
                           []
                         }
                         onChange={
@@ -1762,7 +1836,7 @@ export default function ProductView() {
                 {/* ========================================================== */}
 
                 <Controller
-                  name="occasions"
+                  name="occasionIds"
                   control={
                     control
                   }
@@ -1775,12 +1849,12 @@ export default function ProductView() {
                         Occasions
                       </label>
 
-                      <MultiSelect<string>
+                      <MultiSelect<number>
                         options={
                           occasionOptions
                         }
                         selected={
-                          field.value ??
+                          (field.value as number[] | undefined) ??
                           []
                         }
                         onChange={
