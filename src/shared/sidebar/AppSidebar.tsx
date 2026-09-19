@@ -27,6 +27,7 @@ import {
   Layers,
   FileText,
   MonitorPlay,
+  ShoppingCart,
   Building2,
   LogOut,
 } from "lucide-react";
@@ -48,6 +49,13 @@ const menuItems: any = [
     label: "Products",
     icon: Package,
     path: "/products",
+    children: [],
+  },
+  {
+    id: "orders",
+    label: "Orders",
+    icon: ShoppingCart,
+    path: "/orders",
     children: [],
   },
   {
