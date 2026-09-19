@@ -1,4 +1,4 @@
-import { LayoutGrid, Package, Tags, Tag, CalendarDays, Layers, FileText, MonitorPlay } from "lucide-react";
+import { LayoutGrid, Package, Tags, Tag, CalendarDays, Layers, FileText, MonitorPlay, ShoppingCart } from "lucide-react";
 import { type RouteObject } from "react-router-dom";
 import Dashboard from "@/modules/Dashboard/Dashboard";
 import ProductList from "@/modules/Products/ProductList";
@@ -16,6 +16,8 @@ import BlogView from "@/modules/Blogs/BlogView";
 import HeroSlideList from "@/modules/HeroSlides/HeroSlideList";
 import HeroSlideCreate from "@/modules/HeroSlides/HeroSlideCreate";
 import HeroSlideView from "@/modules/HeroSlides/HeroSlideView";
+import OrderList from "@/modules/Orders/OrderList";
+import OrderView from "@/modules/Orders/OrderView";
 
 export type AppRoutesProps = RouteObject & {
   icon?: React.ReactNode;
@@ -43,6 +45,15 @@ const MAIN_ITEMS: AppRoutesProps[] = [
   {
     path: "/products/:id/edit",
     element: <ProductView />,
+  },
+  {
+    icon: <ShoppingCart size={20} />,
+    path: "/orders",
+    element: <OrderList />,
+  },
+  {
+    path: "/orders/:id",
+    element: <OrderView />,
   },
   {
     icon: <Tags size={20} />,
