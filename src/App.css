@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+/* @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @import '@fontsource-variable/geist';
@@ -127,5 +127,195 @@
 
   html {
     @apply font-sans;
+  }
+} */
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import '@fontsource-variable/geist';
+
+
+:root {
+  /* Base */
+  --background: #f8f7f4;
+  --foreground: #24211d;
+
+  /* Surfaces */
+  --card: #ffffff;
+  --card-foreground: #24211d;
+
+  --popover: #ffffff;
+  --popover-foreground: #24211d;
+
+  /* Brand */
+  --primary: #c5a059;
+  --primary-foreground: #ffffff;
+
+  /* Secondary */
+  --secondary: #f1eee8;
+  --secondary-foreground: #403b33;
+
+  /* Muted */
+  --muted: #f3f1ec;
+  --muted-foreground: #746f67;
+
+  /* Accent */
+  --accent: #eee6d6;
+  --accent-foreground: #5b4a2d;
+
+  /* Status */
+  --destructive: #c7463f;
+
+  /* Forms / Borders */
+  --border: #e4e0d8;
+  --input: #ddd8ce;
+  --ring: #c5a059;
+
+  /* Charts */
+  --chart-1: #c5a059;
+  --chart-2: #8b7350;
+  --chart-3: #6f8b76;
+  --chart-4: #64748b;
+  --chart-5: #a66b5f;
+
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #24211d;
+
+  --sidebar-primary: #c5a059;
+  --sidebar-primary-foreground: #ffffff;
+
+  --sidebar-accent: #f5f1e8;
+  --sidebar-accent-foreground: #4b4030;
+
+  --sidebar-border: #e4e0d8;
+  --sidebar-ring: #c5a059;
+}
+
+.dark {
+  /* Base */
+  --background: #181714;
+  --foreground: #f4f1e9;
+
+  /* Surfaces */
+  --card: #211f1b;
+  --card-foreground: #f4f1e9;
+
+  --popover: #211f1b;
+  --popover-foreground: #f4f1e9;
+
+  /* Brand */
+  --primary: #d1ad67;
+  --primary-foreground: #211f1b;
+
+  /* Secondary */
+  --secondary: #2d2a24;
+  --secondary-foreground: #eee9df;
+
+  /* Muted */
+  --muted: #292722;
+  --muted-foreground: #aaa49a;
+
+  /* Accent */
+  --accent: #393226;
+  --accent-foreground: #f0dfbd;
+
+  /* Status */
+  --destructive: #df6b63;
+
+  /* Forms / Borders */
+  --border: #39362f;
+  --input: #403c34;
+  --ring: #d1ad67;
+
+  /* Charts */
+  --chart-1: #d1ad67;
+  --chart-2: #a68a58;
+  --chart-3: #78947d;
+  --chart-4: #8290a3;
+  --chart-5: #c17b6d;
+
+  /* Sidebar */
+  --sidebar: #1d1b18;
+  --sidebar-foreground: #f4f1e9;
+
+  --sidebar-primary: #d1ad67;
+  --sidebar-primary-foreground: #211f1b;
+
+  --sidebar-accent: #2d2922;
+  --sidebar-accent-foreground: #f0dfbd;
+
+  --sidebar-border: #39362f;
+  --sidebar-ring: #d1ad67;
+}
+
+@theme inline {
+  --font-sans: 'Geist Variable', sans-serif;
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground;
   }
 }
