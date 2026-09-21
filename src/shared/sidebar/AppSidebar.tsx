@@ -139,16 +139,16 @@ function AppSidebar() {
 
   return (
     <>
-      <Sidebar collapsible="icon">
-        <SidebarHeader className="px-3 pb-3 pt-4">
+      <Sidebar collapsible="icon" className="border-r border-sidebar-border/70">
+        <SidebarHeader className="px-3 pb-4 pt-5">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild className="bg-transparent!">
                 <Link to="/dashboard">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                  <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
                     <Building2 className="size-4" />
                   </div>
-                  <span className="font-semibold tracking-tight">Ratna Treasure <p>Handicraft</p></span>
+                  <span className="font-semibold tracking-tight">Ratna Treasure <span className="block text-xs font-normal text-muted-foreground">Handicraft</span></span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -157,7 +157,7 @@ function AppSidebar() {
         </SidebarHeader>
 
         <SidebarContent>
-          <SidebarMenu className="space-y-1.5! px-2">
+          <SidebarMenu className="space-y-1 px-2">
             {menuItems.map((item: any) => {
               const Icon = item.icon;
               const hasChildren = item.children.length > 0;

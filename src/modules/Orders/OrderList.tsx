@@ -9,6 +9,7 @@ import { DataTable, type DataTableConfig, type DataTableState } from "@/componen
 import { TableActions, tableActionIcons } from "@/components/ui/table-actions";
 import type { ApiPaginatedResponse } from "@/utils/interface";
 import type { Order } from "./order-types";
+import { OrderEditDialog } from "./OrderEditDialog";
 
 const formatAmount = (amount: number, currency: string) => {
   try {
@@ -32,6 +33,7 @@ export default function OrderList() {
   const [size] = useState(10);
   const [sortBy, setSortBy] = useState("id");
   const [direction, setDirection] = useState<"asc" | "desc">("desc");
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [tableState, setTableState] = useState<DataTableState>({
     pagination: { pageIndex: 0, pageSize: size },
     sorting: [],
@@ -105,6 +107,10 @@ export default function OrderList() {
           label: "View",
           icon: tableActionIcons.view,
           onClick: () => navigate(`/orders/${row.original.id}`, { state: { order: row.original } }),
+        }, {
+          label: "Edit",
+          icon: tableActionIcons.edit,
+          onClick: () => setEditingOrder(row.original),
         }]} />
       ),
     },
@@ -138,6 +144,7 @@ export default function OrderList() {
       ) : (
         <DataTable data={orders} columns={columns} pageCount={data?.data?.totalPages ?? 1} totalRows={data?.data?.totalElements ?? orders.length} state={tableState} onStateChange={handleTableStateChange} tableConfig={tableConfig} />
       )}
+      <OrderEditDialog order={editingOrder} open={Boolean(editingOrder)} onOpenChange={(open) => { if (!open) setEditingOrder(null); }} />
     </div>
   );
 }

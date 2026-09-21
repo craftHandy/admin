@@ -26,7 +26,7 @@ const AppLayout = ({ children }: PropsWithChildren) => {
             {/* Main Content */}
             <SidebarInset>
                 {/* Header */}
-                <header className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
+                <header className="sticky top-0 z-50 flex h-16 items-center gap-3 border-b border-border/70 bg-background/85 px-5 backdrop-blur-xl">
                     <SidebarTrigger />
 
                     <Breadcrumb>
@@ -69,8 +69,8 @@ const AppLayout = ({ children }: PropsWithChildren) => {
                 </header>
 
                 {/* Page Content */}
-                <div className="flex-1 overflow-auto bg-muted/30 p-6">
-                    {children}
+                <div className="flex-1 overflow-auto bg-slate-50/70 p-4 md:p-6">
+                    <main className="mx-auto w-full max-w-7xl">{children}</main>
                 </div>
             </SidebarInset>
         </SidebarProvider>
