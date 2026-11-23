@@ -173,7 +173,7 @@ export function FormFileUpload({
               key={f.fileId}
               className="flex items-center gap-2 rounded-md bg-emerald-500/5 px-3 py-1.5 text-xs text-emerald-600"
             >
-              <span className="font-medium">#{f.fileId}</span>
+              <span className="font-medium">{f.fileId}</span>
               {f.fileName && <span className="text-muted-foreground">{f.fileName}</span>}
             </div>
           ))}

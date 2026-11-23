@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import {
     Plus,
-    Loader2,
     AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -49,13 +48,15 @@ export default function CategoryList() {
         columnVisibility: {},
     });
 
+    const search = (tableState.columnFilters ?? []).find((filter) => filter.id === "categoryName")?.value as string ?? "";
     const { data, isLoading, isError, error } = useQuery<ApiPaginatedResponse<Category[]>>({
-        queryKey: ["categories", page, size],
+        queryKey: ["categories", page, size, search],
         queryFn: async () => {
             const response = await api.get("/api/v1/admin/category", {
                 params: {
                     page,
                     size,
+                    search,
                 },
             });
             return response.data;
@@ -96,7 +97,7 @@ export default function CategoryList() {
             {
                 accessorKey: "id",
                 header: "ID",
-                cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">#{row.original.id}</span>,
+                cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.original.id}</span>,
             },
             {
                 accessorKey: "categoryName",
@@ -189,14 +190,7 @@ export default function CategoryList() {
                 </Button>
             </div>
 
-            {isLoading ? (
-                <div className="flex items-center justify-center py-20">
-                    <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        <p className="text-sm text-muted-foreground animate-pulse">Loading categories...</p>
-                    </div>
-                </div>
-            ) : isError ? (
+            { isError ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center gap-3 rounded-lg border bg-card shadow-sm">
                     <AlertCircle className="h-10 w-10 text-destructive" />
                     <h3 className="font-semibold text-lg text-foreground">Error Loading Categories</h3>
@@ -221,6 +215,7 @@ export default function CategoryList() {
                         }
                     }}
                     tableConfig={tableConfig}
+                    isLoading={isLoading}
                 />
             )}
 

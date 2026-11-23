@@ -34,10 +34,11 @@ export default function HeroSlideList() {
         columnVisibility: {},
     });
 
+    const search = (tableState.columnFilters ?? []).find((filter) => filter.id === "title")?.value as string ?? "";
     const { data, isLoading, isError, error } = useQuery<HeroSlideItem[]>({
-        queryKey: ["hero-slides"],
+        queryKey: ["hero-slides", search],
         queryFn: async () => {
-            const response = await api.get("/api/v1/admin/hero-slide");
+            const response = await api.get("/api/v1/admin/hero-slide", { params: { search } });
             return response.data?.data ?? response.data;
         },
     });
@@ -71,7 +72,7 @@ export default function HeroSlideList() {
             {
                 accessorKey: "id",
                 header: "ID",
-                cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">#{row.original.id}</span>,
+                cell: ({ row }) => <span className="font-mono text-xs text-muted-foreground">{row.original.id}</span>,
             },
             {
                 accessorKey: "backgroundImageUrl",
@@ -185,14 +186,7 @@ export default function HeroSlideList() {
                 </Button>
             </div>
 
-            {isLoading ? (
-                <div className="flex items-center justify-center py-20">
-                    <div className="flex flex-col items-center gap-3">
-                        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        <p className="text-sm text-muted-foreground animate-pulse">Loading hero slides...</p>
-                    </div>
-                </div>
-            ) : isError ? (
+            {isError ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center gap-3 rounded-lg border bg-card shadow-sm">
                     <AlertCircle className="h-10 w-10 text-destructive" />
                     <h3 className="font-semibold text-lg text-foreground">Error Loading Hero Slides</h3>
@@ -214,6 +208,7 @@ export default function HeroSlideList() {
                     state={tableState}
                     onStateChange={setTableState}
                     tableConfig={tableConfig}
+                    isLoading={isLoading}
                 />
             )}
 

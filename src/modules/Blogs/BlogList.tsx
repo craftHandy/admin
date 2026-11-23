@@ -42,11 +42,12 @@ export default function BlogList() {
         columnVisibility: {},
     });
 
+    const search = (tableState.columnFilters ?? []).find((filter) => filter.id === "title")?.value as string ?? "";
     const { data, isLoading, isError, error } = useQuery<ApiPaginatedResponse<BlogItem[]>>({
-        queryKey: ["blogs", page, size],
+        queryKey: ["blogs", page, size, search],
         queryFn: async () => {
             const response = await api.get("/api/v1/admin/blog", {
-                params: { page, size },
+                params: { page, size, search },
             });
             return response.data;
         },
@@ -136,11 +137,7 @@ export default function BlogList() {
                 <Button onClick={() => navigate("/blogs/create")}><Plus className="mr-2 h-4 w-4" />Create Blog</Button>
             </div>
 
-            {isLoading ? (
-                <div className="flex items-center justify-center py-20">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                </div>
-            ) : isError ? (
+            { isError ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4 text-center gap-3 rounded-lg border bg-card shadow-sm">
                     <AlertCircle className="h-10 w-10 text-destructive" />
                     <h3 className="font-semibold text-lg">Error Loading Blogs</h3>
@@ -155,6 +152,7 @@ export default function BlogList() {
                     state={tableState}
                     onStateChange={handleTableStateChange}
                     tableConfig={tableConfig}
+                    isLoading={isLoading}
                 />
             )}
 
