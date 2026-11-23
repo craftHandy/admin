@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Pencil, ImageOff, ExternalLink } from "lucide-react";
+import { ArrowLeft, Pencil, ImageOff } from "lucide-react";
 
 export default function HeroSlideView() {
     const { id } = useParams();
@@ -85,7 +85,7 @@ export default function HeroSlideView() {
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Subtitle</h3>
                     <p className="mt-1 text-sm text-muted-foreground">{data.subtitle || "—"}</p>
                 </div>
-                <div>
+                {/* <div>
                     <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">CTA Button</h3>
                     {data.ctaText ? (
                         <Link to={data.ctaLink ?? "/"} className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
@@ -95,7 +95,7 @@ export default function HeroSlideView() {
                     ) : (
                         <p className="mt-1 text-sm text-muted-foreground">—</p>
                     )}
-                </div>
+                </div> */}
             </div>
         </div>
     );
