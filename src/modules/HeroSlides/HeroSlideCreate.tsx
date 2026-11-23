@@ -36,8 +36,8 @@ export default function HeroSlideCreate() {
         defaultValues: {
             title: "",
             subtitle: "",
-            ctaText: "",
-            ctaLink: "",
+            // ctaText: "",
+            // ctaLink: "",
             fileId: null,
             backgroundImageUrl: null,
             active: true,
@@ -60,8 +60,8 @@ export default function HeroSlideCreate() {
             reset({
                 title: existing.title ?? "",
                 subtitle: existing.subtitle ?? "",
-                ctaText: existing.ctaText ?? "",
-                ctaLink: existing.ctaLink ?? "",
+                // ctaText: existing.ctaText ?? "",
+                // ctaLink: existing.ctaLink ?? "",
                 fileId: existing.fileId ?? null,
                 backgroundImageUrl: existing.backgroundImageUrl ?? null,
                 active: existing.active ?? true,
@@ -142,10 +142,10 @@ export default function HeroSlideCreate() {
                     rows={2}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormInput control={control} name="ctaText" label="CTA Text" placeholder="E.g., Shop Now" />
                     <FormInput control={control} name="ctaLink" label="CTA Link" placeholder="E.g., /products" />
-                </div>
+                </div> */}
 
                 <FormCheckbox
                     control={control}

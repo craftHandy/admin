@@ -126,7 +126,7 @@ export default function ProductList() {
       {
         accessorKey: "price",
         header: "Price",
-        cell: ({ row }) => <span className="font-semibold text-foreground">${row.original.price?.toFixed(2)}</span>,
+        cell: ({ row }) => <span className="font-semibold text-foreground">₹{row.original.price?.toFixed(2)}</span>,
       },
       {
         accessorKey: "discountPercentage",
