@@ -46,8 +46,8 @@ export default function ProductList() {
 
   const [page, setPage] = useState(0);
   const [size] = useState(10);
-  const [sortBy, setSortBy] = useState("id");
-  const [direction, setDirection] = useState<"asc" | "desc">("desc");
+  // const [sortBy, setSortBy] = useState("id");
+  // const [direction, setDirection] = useState<"asc" | "desc">("desc");
   const [tableState, setTableState] = useState<DataTableState>({
     pagination: { pageIndex: 0, pageSize: size },
     sorting: [],
@@ -56,15 +56,17 @@ export default function ProductList() {
     columnVisibility: {},
   });
 
+  const search = (tableState.columnFilters ?? []).find((filter) => filter.id === "title")?.value as string ?? "";
   const { data, isLoading, isError, error } = useQuery<ApiPaginatedResponse<Product[]>>({
-    queryKey: ["products", page, size, sortBy, direction],
+    queryKey: ["products", page, size, search],
     queryFn: async () => {
       const response = await api.get("/api/v1/admin/product", {
         params: {
           page,
           size,
-          sortBy,
-          direction,
+          // sortBy,
+          // direction,
+          search,
         },
       });
       return response.data;
@@ -105,10 +107,10 @@ export default function ProductList() {
     if (next.pagination) {
       setPage(next.pagination.pageIndex);
     }
-    if (next.sorting?.[0]) {
-      setSortBy(next.sorting[0].id);
-      setDirection(next.sorting[0].desc ? "desc" : "asc");
-    }
+    // if (next.sorting?.[0]) {
+    //   setSortBy(next.sorting[0].id);
+    //   setDirection(next.sorting[0].desc ? "desc" : "asc");
+    // }
   };
 
   const columns = useMemo<ColumnDef<Product, any>[]>(
@@ -126,7 +128,7 @@ export default function ProductList() {
       {
         accessorKey: "price",
         header: "Price",
-        cell: ({ row }) => <span className="font-semibold text-foreground">₹{row.original.price?.toFixed(2)}</span>,
+        cell: ({ row }) => <span className="font-semibold text-foreground">₹{row.original.price?.toLocaleString('en-IN')}</span>,
       },
       {
         accessorKey: "discountPercentage",
@@ -241,14 +243,7 @@ export default function ProductList() {
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            <p className="text-sm text-muted-foreground animate-pulse">Loading products...</p>
-          </div>
-        </div>
-      ) : isError ? (
+     { isError ? (
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center gap-3 rounded-lg border bg-card shadow-sm">
           <AlertCircle className="h-10 w-10 text-destructive" />
           <h3 className="font-semibold text-lg text-foreground">Error Loading Products</h3>
@@ -268,8 +263,9 @@ export default function ProductList() {
           state={tableState}
           onStateChange={handleTableStateChange}
           tableConfig={tableConfig}
+          isLoading={isLoading}
         />
-      )}
+      )} 
 
       <ConfirmDialog
         open={deleteTarget !== null}

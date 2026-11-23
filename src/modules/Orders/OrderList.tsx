@@ -31,8 +31,8 @@ export default function OrderList() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [size] = useState(10);
-  const [sortBy, setSortBy] = useState("id");
-  const [direction, setDirection] = useState<"asc" | "desc">("desc");
+  // const [sortBy, setSortBy] = useState("id");
+  // const [direction, setDirection] = useState<"asc" | "desc">("desc");
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [tableState, setTableState] = useState<DataTableState>({
     pagination: { pageIndex: 0, pageSize: size },
@@ -42,11 +42,12 @@ export default function OrderList() {
     columnVisibility: {},
   });
 
+  const search = (tableState.columnFilters ?? []).find((filter) => filter.id === "orderNumber")?.value as string ?? "";
   const { data, isLoading, isError, error } = useQuery<ApiPaginatedResponse<Order[]>>({
-    queryKey: ["orders", page, size, sortBy, direction],
+    queryKey: ["orders", page, size,  search],
     queryFn: async () => {
       const response = await api.get("/api/v1/admin/orders/list", {
-        params: { page, size, sortBy, direction },
+        params: { page, size, search },
       });
       return response.data;
     },
@@ -57,16 +58,16 @@ export default function OrderList() {
   const handleTableStateChange = (next: DataTableState) => {
     setTableState(next);
     if (next.pagination) setPage(next.pagination.pageIndex);
-    if (next.sorting?.[0]) {
-      setSortBy(next.sorting[0].id);
-      setDirection(next.sorting[0].desc ? "desc" : "asc");
-    }
+    // if (next.sorting?.[0]) {
+    //   setSortBy(next.sorting[0].id);
+    //   setDirection(next.sorting[0].desc ? "desc" : "asc");
+    // }
   };
 
   const columns = useMemo<ColumnDef<Order, unknown>[]>(() => [
     {
       accessorKey: "orderNumber",
-      header: "Order #",
+      header: "Order ",
       cell: ({ row }) => <span className="font-medium">{row.original.orderNumber}</span>,
     },
     {
@@ -132,9 +133,7 @@ export default function OrderList() {
         <p className="text-sm text-muted-foreground">View customer orders and their payment status.</p>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20"><div className="flex flex-col items-center gap-3"><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" /><p className="text-sm text-muted-foreground">Loading orders...</p></div></div>
-      ) : isError ? (
+      {isError ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-lg border bg-card px-4 py-16 text-center shadow-sm">
           <AlertCircle className="h-10 w-10 text-destructive" />
           <h3 className="text-lg font-semibold">Error Loading Orders</h3>
@@ -142,7 +141,7 @@ export default function OrderList() {
           <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["orders"] })}>Try Again</Button>
         </div>
       ) : (
-        <DataTable data={orders} columns={columns} pageCount={data?.data?.totalPages ?? 1} totalRows={data?.data?.totalElements ?? orders.length} state={tableState} onStateChange={handleTableStateChange} tableConfig={tableConfig} />
+        <DataTable data={orders} columns={columns} pageCount={data?.data?.totalPages ?? 1} totalRows={data?.data?.totalElements ?? orders.length} state={tableState} onStateChange={handleTableStateChange} tableConfig={tableConfig} isLoading={isLoading} />
       )}
       <OrderEditDialog order={editingOrder} open={Boolean(editingOrder)} onOpenChange={(open) => { if (!open) setEditingOrder(null); }} />
     </div>
